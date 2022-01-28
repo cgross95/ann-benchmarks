@@ -43,3 +43,9 @@
 			- Fits training data
 			- Sets individual arguments for queries from `query-args` in `algos.yaml`
 			- `ann_benchmark.runner.run_individual_query`
+				- Dispatches queries in the test data to algorithm
+				- Different workflow if the algorithm needs to prepare for a query
+				- Different workflow depending on whether single or batch queries are requested
+				- Timing is reported as average over all queries in the test data
+			- `ann_benchmarks.results.store_results`
+				- Stores all times, neighbors, distances, and other metadata in HD5 file named by dataset, algorithm, and arguments

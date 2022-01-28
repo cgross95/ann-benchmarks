@@ -2,6 +2,7 @@ import h5py
 import numpy
 import os
 import random
+import csv
 
 from urllib.request import urlopen
 from urllib.request import urlretrieve
@@ -426,6 +427,30 @@ def lastfm(out_fn, n_dimensions, test_size=50000):
     write_output(item_factors, user_factors, out_fn, 'angular')
 
 
+def siemens(out_fn, dataset, step=50):
+    # dataset is a string in ['SHERPA', 'OLHC', 'AS']
+    # step is distance between query points in dataset
+    if dataset not in ['SHERPA', 'OLHC', 'AS']:
+        dataset = 'OLHC'  # default
+
+    if not os.path.exists(out_fn):
+        X_test = []
+        X_train = []
+        csv_fn = os.path.join('data', '%s.csv' % dataset)
+        with open(csv_fn, newline='') as csv_f:
+            reader = csv.reader(csv_f)
+            reader.__next__()  # Burn header row
+            for i, row in enumerate(reader):
+                if i > 0 and i % step == 0:
+                    # Assume first two columns are not features
+                    X_test.append(list(map(float, row[2:])))
+                else:
+                    # Assume first two columns are not features
+                    X_train.append(list(map(float, row[2:])))
+        write_output(numpy.array(X_train), numpy.array(X_test), out_fn,
+                     'euclidean')
+
+
 DATASETS = {
     'deep-image-96-angular': deep_image,
     'fashion-mnist-784-euclidean': fashion_mnist,
@@ -463,4 +488,7 @@ DATASETS = {
     'sift-256-hamming': lambda out_fn: sift_hamming(
         out_fn, 'sift.hamming.256'),
     'kosarak-jaccard': lambda out_fn: kosarak(out_fn),
+    'siemens-sherpa': lambda out_fn: siemens(out_fn, 'SHERPA'),
+    'siemens-olhc': lambda out_fn: siemens(out_fn, 'OLHC'),
+    'siemens-as': lambda out_fn: siemens(out_fn, 'AS')
 }

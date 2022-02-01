@@ -46,6 +46,44 @@ def get_dataset(which):
 # You probably never need to do this at home,
 # just rely on the prepared datasets at http://ann-benchmarks.com
 
+def write_dynamic_output(train, fn, distance, point_type='float',
+                         radius=0.1, step=50):
+    # step: distance between each nearest neighbor calculation
+    # radius: what percentage of training data to use as k
+    from ann_benchmarks.algorithms.bruteforce import BruteForceBLAS
+    n = 0
+    f = h5py.File(fn, 'w')
+    f.attrs['type'] = 'dense'
+    f.attrs['distance'] = distance
+    f.attrs['dimension'] = len(train[0])
+    f.attrs['point_type'] = point_type
+    f.attrs['radius'] = radius
+    f.attrs['step'] = step
+    print('train size: %9d * %4d' % train.shape)
+    print('a nearest neighbor will be calculated every %d points' % step)
+    print('%f%% of the points seen at each step will be used as the number of neighbors'
+          % (100 * radius))
+    f.create_dataset('train', (len(train), len(
+        train[0])), dtype=train.dtype)[:] = train
+    num_test = (len(train) // step) - 1
+    max_count = int(num_test * step * radius)
+    neighbors = f.create_dataset('neighbors', (num_test, max_count), dtype='i')
+    distances = f.create_dataset('distances', (num_test, max_count), dtype='f')
+    bf = BruteForceBLAS(distance, precision=train.dtype)
+
+    for idx, i in enumerate(range(step, len(train), step)):
+        bf.fit(train[:i])
+        x = train[i]
+        count = int(radius * i)
+        if i % 1000 == 0:
+            print('%d/%d...' % (i, len(train)))
+        res = list(bf.query_with_distances(x, count))
+        res.sort(key=lambda t: t[-1])
+        neighbors[idx] = [j for j, _ in res] + [-1] * (max_count - len(res))
+        distances[idx] = [d for _, d in res]\
+            + [float('inf')] * (max_count - len(res))
+    f.close()
+
 
 def write_output(train, test, fn, distance, point_type='float', count=100):
     from ann_benchmarks.algorithms.bruteforce import BruteForceBLAS
@@ -427,7 +465,7 @@ def lastfm(out_fn, n_dimensions, test_size=50000):
     write_output(item_factors, user_factors, out_fn, 'angular')
 
 
-def siemens(out_fn, dataset, step=50):
+def siemens_static(out_fn, dataset, step=50):
     # dataset is a string in ['SHERPA', 'OLHC', 'AS']
     # step is distance between query points in dataset
     if dataset not in ['SHERPA', 'OLHC', 'AS']:
@@ -447,8 +485,27 @@ def siemens(out_fn, dataset, step=50):
                 else:
                     # Assume first two columns are not features
                     X_train.append(list(map(float, row[2:])))
-        write_output(numpy.array(X_train), numpy.array(X_test), out_fn,
-                     'euclidean')
+        write_output(numpy.array(X_train), numpy.array(X_test),
+                     out_fn, 'euclidean')
+
+
+def siemens_dynamic(out_fn, dataset, radius=0.1, step=50):
+    # dataset is a string in ['SHERPA', 'OLHC', 'AS']
+    # step is distance between query points in dataset
+    if dataset not in ['SHERPA', 'OLHC', 'AS']:
+        dataset = 'OLHC'  # default
+
+    if not os.path.exists(out_fn):
+        X = []
+        csv_fn = os.path.join('data', '%s.csv' % dataset)
+        with open(csv_fn, newline='') as csv_f:
+            reader = csv.reader(csv_f)
+            reader.__next__()  # Burn header row
+            for row in reader:
+                # Assume first two columns are not features
+                X.append(list(map(float, row[2:])))
+        write_dynamic_output(numpy.array(X), out_fn, 'euclidean',
+                             radius=radius, step=step)
 
 
 DATASETS = {
@@ -488,7 +545,10 @@ DATASETS = {
     'sift-256-hamming': lambda out_fn: sift_hamming(
         out_fn, 'sift.hamming.256'),
     'kosarak-jaccard': lambda out_fn: kosarak(out_fn),
-    'siemens-sherpa': lambda out_fn: siemens(out_fn, 'SHERPA'),
-    'siemens-olhc': lambda out_fn: siemens(out_fn, 'OLHC'),
-    'siemens-as': lambda out_fn: siemens(out_fn, 'AS')
+    'siemens-sherpa-static': lambda out_fn: siemens_static(out_fn, 'SHERPA'),
+    'siemens-olhc-static': lambda out_fn: siemens_static(out_fn, 'OLHC'),
+    'siemens-as-static': lambda out_fn: siemens_static(out_fn, 'AS'),
+    'siemens-sherpa': lambda out_fn: siemens_dynamic(out_fn, 'SHERPA'),
+    'siemens-olhc': lambda out_fn: siemens_dynamic(out_fn, 'OLHC'),
+    'siemens-as': lambda out_fn: siemens_dynamic(out_fn, 'AS')
 }

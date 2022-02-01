@@ -18,6 +18,61 @@ from ann_benchmarks.distance import metrics, dataset_transform
 from ann_benchmarks.results import store_results
 
 
+def run_individual_query_dynamic(algo, X_train, step, radius, distance,
+                                 run_count):
+    prepared_queries = hasattr(algo, "prepare_query")
+
+    num_test = (len(train) // step) - 1
+    for i in range(run_count):
+        print('Run %d/%d...' % (i + 1, run_count))
+        # a bit dumb but can't be a scalar since of Python's scoping rules
+        n_items_processed = [0]
+
+        def single_query(j):
+            # j is index of query in X_train
+            t0 = time.time()
+            memory_usage_before = algo.get_memory_usage()
+            algo.fit(X_train[:j])
+            build_time = time.time() - t0
+            index_size = algo.get_memory_usage() - memory_usage_before
+            v = X_train[j]
+            count = int(radius * i)
+            if prepared_queries:
+                algo.prepare_query(v, count)
+                start = time.time()
+                algo.run_prepared_query()
+                total = (time.time() - start)
+                candidates = algo.get_prepared_query_results()
+            else:
+                start = time.time()
+                candidates = algo.query(v, count)
+                total = (time.time() - start)
+            candidates = [(int(idx), float(metrics[distance]['distance'](v, X_train[idx])))  # noqa
+                          for idx in candidates]
+            n_items_processed[0] += 1
+            if n_items_processed[0] % 1000 == 0:
+                print('Processed %d/%d queries...'
+                      % (n_items_processed[0], num_test))
+            if len(candidates) > count:
+                print('warning: algorithm %s returned %d results, but count'
+                      ' is only %d)' % (algo, len(candidates), count))
+            return (build_time, index_size, total, candidates)
+
+        results = [single_query(j) for j in range(step, len(X_train), step)]
+
+    verbose = hasattr(algo, "query_verbose")
+    attrs = {
+        "expect_extra": verbose,
+        "name": str(algo),
+        "run_count": run_count,
+        "distance": distance,
+    }
+    additional = algo.get_additional()
+    for k in additional:
+        attrs[k] = additional[k]
+    return (attrs, results)
+
+
 def run_individual_query(algo, X_train, X_test, distance, count, run_count,
                          batch):
     prepared_queries = \
@@ -93,6 +148,49 @@ def run_individual_query(algo, X_train, X_test, distance, count, run_count,
     for k in additional:
         attrs[k] = additional[k]
     return (attrs, results)
+
+
+def run_dynamic(definition, dataset, run_count, batch):
+    algo = instantiate_algorithm(definition)
+    assert not definition.query_argument_groups \
+           or hasattr(algo, "set_query_arguments"), """\
+error: query argument groups have been specified for %s.%s(%s), but the \
+algorithm instantiated from it does not implement the set_query_arguments \
+function""" % (definition.module, definition.constructor, definition.arguments)
+
+    D, dimension = get_dataset(dataset)
+    X_train = numpy.array(D['train'])
+    distance = D.attrs['distance']
+    radius = D.attrs['radius']
+    step = D.attrs['step']
+    print('got a train set of size (%d * %d)' % (X_train.shape[0], dimension))
+    print('got %d step and %f radius' % (step, radius))
+
+    try:
+        prepared_queries = False
+        if hasattr(algo, "supports_prepared_queries"):
+            prepared_queries = algo.supports_prepared_queries()
+
+        query_argument_groups = definition.query_argument_groups
+        # Make sure that algorithms with no query argument groups still get run
+        # once by providing them with a single, empty, harmless group
+        if not query_argument_groups:
+            query_argument_groups = [[]]
+
+        for pos, query_arguments in enumerate(query_argument_groups, 1):
+            print("Running query argument group %d of %d..." %
+                  (pos, len(query_argument_groups)))
+            if query_arguments:
+                algo.set_query_arguments(*query_arguments)
+            descriptor, results = run_individual_query_dynamic(
+                algo, X_train, step, radius, distance, run_count)
+            descriptor["algo"] = definition.algorithm
+            descriptor["dataset"] = dataset
+            # TODO: Rewrite store_results for dynamic datasets
+            # store_results(dataset, count, definition,
+            #               query_arguments, descriptor, results, batch)
+    finally:
+        algo.done()
 
 
 def run(definition, dataset, count, run_count, batch):

@@ -61,8 +61,8 @@ def main():
     parser.add_argument(
         "-k", "--count",
         default=10,
-        type=positive_int,
-        help="the number of near neighbours to search for")
+        type=int,
+        help="the number of near neighbours to search for. NOTE: if k is set to -1, then the algorithm is tested in dynamic mode")
     parser.add_argument(
         '--definitions',
         metavar='FILE',

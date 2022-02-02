@@ -22,6 +22,31 @@ def get_result_filename(dataset=None, count=None, definition=None,
     return os.path.join(*d)
 
 
+def store_results_dynamic(dataset, max_count, definition, query_arguments,
+                          attrs, results):
+    fn = get_result_filename(
+        dataset, 'dynamic', definition, query_arguments, False)
+    head, tail = os.path.split(fn)
+    if not os.path.isdir(head):
+        os.makedirs(head)
+    f = h5py.File(fn, 'w')
+    for k, v in attrs.items():
+        f.attrs[k] = v
+    build_times = f.create_dataset('build_times', (len(results),), 'f')
+    index_sizes = f.create_dataset('index_sizes', (len(results),), 'f')
+    search_times = f.create_dataset('search_times', (len(results),), 'f')
+    neighbors = f.create_dataset('neighbors', (len(results), max_count), 'i')
+    distances = f.create_dataset('distances', (len(results), max_count), 'f')
+    for i, (build_time, index_size, search_time, ds) in enumerate(results):
+        build_times[i] = build_time
+        index_sizes[i] = index_size
+        search_times[i] = search_time
+        neighbors[i] = [n for n, d in ds] + [-1] * (max_count - len(ds))
+        distances[i] = [d for n, d in ds]\
+            + [float('inf')] * (max_count - len(ds))
+    f.close()
+
+
 def store_results(dataset, count, definition, query_arguments, attrs, results,
                   batch):
     fn = get_result_filename(

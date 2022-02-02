@@ -15,50 +15,55 @@ from ann_benchmarks.algorithms.definitions import (Definition,
                                                    instantiate_algorithm)
 from ann_benchmarks.datasets import get_dataset, DATASETS
 from ann_benchmarks.distance import metrics, dataset_transform
-from ann_benchmarks.results import store_results
+from ann_benchmarks.results import store_results, store_results_dynamic
 
 
 def run_individual_query_dynamic(algo, X_train, step, radius, distance,
                                  run_count):
     prepared_queries = hasattr(algo, "prepare_query")
 
-    num_test = (len(train) // step) - 1
-    for i in range(run_count):
-        print('Run %d/%d...' % (i + 1, run_count))
-        # a bit dumb but can't be a scalar since of Python's scoping rules
-        n_items_processed = [0]
+    num_test = (len(X_train) // step) - 1
+    if run_count > 1:
+        print('NOTE: Running multiple times is currently disabled for dynamic datasets. Continuing with only one run.')
 
-        def single_query(j):
-            # j is index of query in X_train
-            t0 = time.time()
-            memory_usage_before = algo.get_memory_usage()
-            algo.fit(X_train[:j])
-            build_time = time.time() - t0
-            index_size = algo.get_memory_usage() - memory_usage_before
-            v = X_train[j]
-            count = int(radius * i)
-            if prepared_queries:
-                algo.prepare_query(v, count)
-                start = time.time()
-                algo.run_prepared_query()
-                total = (time.time() - start)
-                candidates = algo.get_prepared_query_results()
-            else:
-                start = time.time()
-                candidates = algo.query(v, count)
-                total = (time.time() - start)
-            candidates = [(int(idx), float(metrics[distance]['distance'](v, X_train[idx])))  # noqa
-                          for idx in candidates]
-            n_items_processed[0] += 1
-            if n_items_processed[0] % 1000 == 0:
-                print('Processed %d/%d queries...'
-                      % (n_items_processed[0], num_test))
-            if len(candidates) > count:
-                print('warning: algorithm %s returned %d results, but count'
-                      ' is only %d)' % (algo, len(candidates), count))
-            return (build_time, index_size, total, candidates)
+    # for i in range(run_count):
+    #    print('Run %d/%d...' % (i + 1, run_count))
+    # a bit dumb but can't be a scalar since of Python's scoping rules
 
-        results = [single_query(j) for j in range(step, len(X_train), step)]
+    n_items_processed = [0]
+
+    def single_query(j):
+        # j is index of query in X_train
+        t0 = time.time()
+        memory_usage_before = algo.get_memory_usage()
+        algo.fit(X_train[:j])
+        build_time = time.time() - t0
+        index_size = algo.get_memory_usage() - memory_usage_before
+        v = X_train[j]
+        print(f'Processing query {j} on model that built in {build_time}')
+        count = int(radius * j)
+        if prepared_queries:
+            algo.prepare_query(v, count)
+            start = time.time()
+            algo.run_prepared_query()
+            total = (time.time() - start)
+            candidates = algo.get_prepared_query_results()
+        else:
+            start = time.time()
+            candidates = algo.query(v, count)
+            total = (time.time() - start)
+        candidates = [(int(idx), float(metrics[distance]['distance'](v, X_train[idx])))  # noqa
+                      for idx in candidates]
+        n_items_processed[0] += 1
+        if n_items_processed[0] % 1000 == 0:
+            print('Processed %d/%d queries...'
+                  % (n_items_processed[0], num_test))
+        if len(candidates) > count:
+            print('warning: algorithm %s returned %d results, but count'
+                  ' is only %d)' % (algo, len(candidates), count))
+        return (build_time, index_size, total, candidates)
+
+    results = [single_query(j) for j in range(step, len(X_train), step)]
 
     verbose = hasattr(algo, "query_verbose")
     attrs = {
@@ -150,7 +155,7 @@ def run_individual_query(algo, X_train, X_test, distance, count, run_count,
     return (attrs, results)
 
 
-def run_dynamic(definition, dataset, run_count, batch):
+def run_dynamic(definition, dataset, run_count):
     algo = instantiate_algorithm(definition)
     assert not definition.query_argument_groups \
            or hasattr(algo, "set_query_arguments"), """\
@@ -163,6 +168,8 @@ function""" % (definition.module, definition.constructor, definition.arguments)
     distance = D.attrs['distance']
     radius = D.attrs['radius']
     step = D.attrs['step']
+    num_test = (len(X_train) // step) - 1
+    max_count = int(num_test * step * radius)
     print('got a train set of size (%d * %d)' % (X_train.shape[0], dimension))
     print('got %d step and %f radius' % (step, radius))
 
@@ -186,9 +193,8 @@ function""" % (definition.module, definition.constructor, definition.arguments)
                 algo, X_train, step, radius, distance, run_count)
             descriptor["algo"] = definition.algorithm
             descriptor["dataset"] = dataset
-            # TODO: Rewrite store_results for dynamic datasets
-            # store_results(dataset, count, definition,
-            #               query_arguments, descriptor, results, batch)
+            store_results_dynamic(dataset, max_count, definition,
+                                  query_arguments, descriptor, results)
     finally:
         algo.done()
 
@@ -271,7 +277,7 @@ def run_from_cmdline():
         required=True)
     parser.add_argument(
         '--count',
-        help='K: Number of nearest neighbours for the algorithm to return.',
+        help='K: Number of nearest neighbours for the algorithm to return. If K=-1, the algorithm is tested in dynamic mode.',
         required=True,
         type=int)
     parser.add_argument(
@@ -306,7 +312,12 @@ def run_from_cmdline():
         query_argument_groups=query_args,
         disabled=False
     )
-    run(definition, args.dataset, args.count, args.runs, args.batch)
+    if args.count > 0:
+        run(definition, args.dataset, args.count, args.runs, args.batch)
+    else:
+        if args.batch:
+            print('NOTE: Batch queries are not available in dynamic mode. Running without batch queries.')
+        run_dynamic(definition, args.dataset, args.runs)
 
 
 def run_docker(definition, dataset, count, runs, timeout, batch, cpu_limit,

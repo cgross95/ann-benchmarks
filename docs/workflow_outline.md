@@ -49,3 +49,30 @@
 				- Timing is reported as average over all queries in the test data
 			- `ann_benchmarks.results.store_results`
 				- Stores all times, neighbors, distances, and other metadata in HD5 file named by dataset, algorithm, and arguments
+
+# Plotting
+
+## Main command
+
+- Run `python plot.py --dataset data`
+	- Helpful command line arguments:
+		- `-x` and `-y` control the metrics on the respective axes. Available metrics are
+			- `k-nn`: Recall
+			- `epsilon`: Epsilon 0.01 Recall
+			- `largeepsilon`: Epsilon 0.1 Recall
+			- `rel`: Relative Error
+			- `qps`: Queries per second (1/s)
+			- `distcomps`: Number of distance computations
+			- `build`: Build time (s)
+			- `candidates`: Number of candidates generated
+			- `indexsize`: Index size (kB)
+			- `queriessize`: Index size (kB)/Queries per second (s)
+		- `-X` and `-Y` control the scale on the respective axes
+
+## Workflow
+- `plot.py`
+	- `ann_benchmarks.results.load_all_results`
+		- Return a generator over the list of HD5 result files for the given dataset, count, etc
+	- `ann_benchmarks.plotting.utils.create_linestyles`
+	- `ann_benchmarks.plotting.utils.compute_metrics`
+	- `plot.create_plot`

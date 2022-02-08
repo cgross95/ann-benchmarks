@@ -466,9 +466,9 @@ def lastfm(out_fn, n_dimensions, test_size=50000):
 
 
 def siemens_static(out_fn, dataset, step=50):
-    # dataset is a string in ['SHERPA', 'OLHC', 'AS']
+    # dataset is a string in ['SHERPA', 'SHERPA_100000', 'OLHC', 'AS']
     # step is distance between query points in dataset
-    if dataset not in ['SHERPA', 'OLHC', 'AS']:
+    if dataset not in ['SHERPA', 'SHERPA_100000', 'OLHC', 'AS']:
         dataset = 'OLHC'  # default
 
     if not os.path.exists(out_fn):
@@ -490,9 +490,9 @@ def siemens_static(out_fn, dataset, step=50):
 
 
 def siemens_dynamic(out_fn, dataset, radius=0.1, step=50):
-    # dataset is a string in ['SHERPA', 'OLHC', 'AS']
+    # dataset is a string in ['SHERPA', 'SHERPA_100000', 'OLHC', 'AS']
     # step is distance between query points in dataset
-    if dataset not in ['SHERPA', 'OLHC', 'AS']:
+    if dataset not in ['SHERPA', 'SHERPA_100000', 'OLHC', 'AS']:
         dataset = 'OLHC'  # default
 
     if not os.path.exists(out_fn):
@@ -546,9 +546,13 @@ DATASETS = {
         out_fn, 'sift.hamming.256'),
     'kosarak-jaccard': lambda out_fn: kosarak(out_fn),
     'siemens-sherpa-static': lambda out_fn: siemens_static(out_fn, 'SHERPA'),
+    'siemens-big-sherpa-static': lambda out_fn: siemens_static(
+        out_fn, 'SHERPA_100000'),
     'siemens-olhc-static': lambda out_fn: siemens_static(out_fn, 'OLHC'),
     'siemens-as-static': lambda out_fn: siemens_static(out_fn, 'AS'),
     'siemens-sherpa': lambda out_fn: siemens_dynamic(out_fn, 'SHERPA'),
+    'siemens-big-sherpa': lambda out_fn: siemens_dynamic(
+        out_fn, 'SHERPA_100000'),
     'siemens-olhc': lambda out_fn: siemens_dynamic(out_fn, 'OLHC'),
     'siemens-as': lambda out_fn: siemens_dynamic(out_fn, 'AS')
 }

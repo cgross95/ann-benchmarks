@@ -1,0 +1,6 @@
+FROM ann-benchmarks
+
+RUN apt-get install -y libopenblas-dev
+RUN git clone https://github.com/ke-li/dci-knn.git
+RUN cd dci-knn && python3 setup.py install
+RUN python3 -c 'import dciknn'

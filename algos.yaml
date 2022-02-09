@@ -671,6 +671,24 @@ float:
           arg-groups:
             - {"M": 96, "efConstruction": 500}
           query-args: [[10, 20, 40, 80, 120, 200, 400, 600, 800]]
+    dciknn:
+      docker-tag: ann-benchmarks-dciknn
+      module: ann_benchmarks.algorithms.dciknn
+      constructor: DCIKNN
+      base-args: ["@dimension"]
+      run-groups:
+        dciknn:
+            args: [
+              [2, 3],
+              [7, 10],
+              [2, 3],
+              [10],
+              [0.002]
+            ]
+            query-args: [
+              [100],
+              [0.8]
+            ]
 
   angular:
     vamana(diskann):

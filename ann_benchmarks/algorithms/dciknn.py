@@ -25,11 +25,15 @@ class DCIKNN(BaseANN):
         # set up empty database
         self._dci_db = DCI(dim, self._num_comp_indices,
                            self._num_simp_indices)
+        self._fitted = False
 
     def fit(self, X):
-        self._dci_db.add(X, num_levels=self._num_levels,
+        if self._fitted:
+            self._dci_db.clear()
+        self._dci_db.add(np.copy(X), num_levels=self._num_levels,
                          field_of_view=self._construction_field_of_view,
                          prop_to_retrieve=self._construction_prop_to_retrieve)
+        self._fitted = True
 
     def set_query_arguments(self, query_field_of_view, query_prop_to_retrieve):
         self._query_field_of_view = query_field_of_view

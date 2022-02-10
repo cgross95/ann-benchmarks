@@ -501,7 +501,10 @@ def siemens_dynamic(out_fn, dataset, radius=0.1, step=50):
         with open(csv_fn, newline='') as csv_f:
             reader = csv.reader(csv_f)
             reader.__next__()  # Burn header row
-            for row in reader:
+            max_points = 50000
+            for i, row in enumerate(reader):
+                if i == max_points:
+                    break
                 # Assume first two columns are not features
                 X.append(list(map(float, row[2:])))
         write_dynamic_output(numpy.array(X), out_fn, 'euclidean',

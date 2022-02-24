@@ -10,31 +10,35 @@ This project contains some tools to benchmark various implementations of approxi
 Evaluated
 =========
 
-* [Annoy](https://github.com/spotify/annoy)
-* [FLANN](http://www.cs.ubc.ca/research/flann/)
-* [scikit-learn](http://scikit-learn.org/stable/modules/neighbors.html): LSHForest, KDTree, BallTree
-* [PANNS](https://github.com/ryanrhymes/panns)
-* [NearPy](http://pixelogik.github.io/NearPy/)
-* [KGraph](https://github.com/aaalgo/kgraph)
-* [NMSLIB (Non-Metric Space Library)](https://github.com/nmslib/nmslib): SWGraph, HNSW, BallTree, MPLSH
-* [hnswlib (a part of nmslib project)](https://github.com/nmslib/hnsw)
-* [RPForest](https://github.com/lyst/rpforest)
-* [FAISS](https://github.com/facebookresearch/faiss.git)
-* [DolphinnPy](https://github.com/ipsarros/DolphinnPy)
-* [Datasketch](https://github.com/ekzhu/datasketch)
-* [PyNNDescent](https://github.com/lmcinnes/pynndescent)
-* [MRPT](https://github.com/teemupitkanen/mrpt)
-* [NGT](https://github.com/yahoojapan/NGT): ONNG, PANNG, QG
-* [SPTAG](https://github.com/microsoft/SPTAG)
-* [PUFFINN](https://github.com/puffinn/puffinn)
-* [N2](https://github.com/kakao/n2)
-* [ScaNN](https://github.com/google-research/google-research/tree/master/scann)
-* [Elastiknn](https://github.com/alexklibisz/elastiknn)
-* [OpenSearch KNN](https://github.com/opensearch-project/k-NN)
-* [DiskANN](https://github.com/microsoft/diskann): Vamana, Vamana-PQ
-* [Vespa](https://github.com/vespa-engine/vespa)
-* [scipy](https://docs.scipy.org/doc/scipy/reference/spatial.html): cKDTree
-* [vald](https://github.com/vdaas/vald)
+| Method | Suppots dynamic updates | Notes on dynamic updates |
+| :----- | :---------------------: | :----------------------- | 
+| [Annoy](https://github.com/spotify/annoy) | :question: | |
+| [FLANN](http://www.cs.ubc.ca/research/flann/) | :question: | |
+| [scikit-learn](http://scikit-learn.org/stable/modules/neighbors.html): LSHForest, KDTree, BallTree | :question: | |
+| [PANNS](https://github.com/ryanrhymes/panns) | :question: | |
+| [NearPy](http://pixelogik.github.io/NearPy/) | :question: | |
+| [KGraph](https://github.com/aaalgo/kgraph) | :question: | |
+| [NMSLIB (Non-Metric Space Library)](https://github.com/nmslib/nmslib): SWGraph, HNSW, BallTree, MPLSH | :question: | |
+| [hnswlib (a part of nmslib project)](https://github.com/nmslib/hnsw) | :question: | |
+| [RPForest](https://github.com/lyst/rpforest) | :question: | |
+| [FAISS](https://github.com/facebookresearch/faiss.git) | :question: | |
+| [DolphinnPy](https://github.com/ipsarros/DolphinnPy) | :question: | |
+| [Datasketch](https://github.com/ekzhu/datasketch) | :question: | |
+| [PyNNDescent](https://github.com/lmcinnes/pynndescent) | :question: | |
+| [MRPT](https://github.com/teemupitkanen/mrpt) | :question: | |
+| [NGT](https://github.com/yahoojapan/NGT): ONNG, PANNG, QG | :question: | |
+| [SPTAG](https://github.com/microsoft/SPTAG) | :question: | |
+| [PUFFINN](https://github.com/puffinn/puffinn) | :question: | |
+| [N2](https://github.com/kakao/n2) | :question: | |
+| [ScaNN](https://github.com/google-research/google-research/tree/master/scann) | :question: | |
+| [Elastiknn](https://github.com/alexklibisz/elastiknn) | :question: | |
+| [OpenSearch KNN](https://github.com/opensearch-project/k-NN) | :question: | |
+| [DiskANN](https://github.com/microsoft/diskann): Vamana, Vamana-PQ | :question: | |
+| [Vespa](https://github.com/vespa-engine/vespa) | :question: | |
+| [scipy](https://docs.scipy.org/doc/scipy/reference/spatial.html): cKDTree | :question: | |
+| [vald](https://github.com/vdaas/vald) | :question: | |
+| [dci-knn](https://github.com/ke-li/dci-knn) | :x: | |
+| [pydci](https://github.com/cgross95/pydci) | :heavy_check_mark: | |
 
 Data sets
 =========

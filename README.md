@@ -12,7 +12,7 @@ Evaluated
 
 | Method | Dynamic updates? | Notes on dynamic updates |
 | :----- | :---------------------: | :----------------------- | 
-| [Annoy](https://github.com/spotify/annoy) | :question: | |
+| [Annoy](https://github.com/spotify/annoy) | No | "in particular you can not add more items once the tree has been created" |
 | [FLANN](http://www.cs.ubc.ca/research/flann/) | :question: | |
 | [scikit-learn](http://scikit-learn.org/stable/modules/neighbors.html): LSHForest, KDTree, BallTree | :question: | |
 | [PANNS](https://github.com/ryanrhymes/panns) | :question: | |

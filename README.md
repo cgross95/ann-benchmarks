@@ -14,8 +14,8 @@ Evaluated
 | :----- | :---------------------: | :----------------------- | 
 | [Annoy](https://github.com/spotify/annoy) | :x: | "in particular you can not add more items once the tree has been created" |
 | [FLANN](http://www.cs.ubc.ca/research/flann/) | :white_check_mark: | "Working with dynamic point clouds without a need to rebuild entire kd-tree index" |
-| [scikit-learn](http://scikit-learn.org/stable/modules/neighbors.html): LSHForest, KDTree, BallTree | :question: | |
-| [PANNS](https://github.com/ryanrhymes/panns) | :question: | |
+| [scikit-learn](http://scikit-learn.org/stable/modules/neighbors.html): LSHForest, KDTree, BallTree | :x: | Requires rebuilding the tree each time |
+| [PANNS](https://github.com/ryanrhymes/panns) | :x: | Can be compared to old indices but needs to be recreated |
 | [NearPy](http://pixelogik.github.io/NearPy/) | :question: | |
 | [KGraph](https://github.com/aaalgo/kgraph) | :question: | |
 | [NMSLIB (Non-Metric Space Library)](https://github.com/nmslib/nmslib): SWGraph, HNSW, BallTree, MPLSH | :question: | |

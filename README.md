@@ -13,7 +13,7 @@ Evaluated
 | Method | Dynamic updates? | Notes on dynamic updates |
 | :----- | :---------------------: | :----------------------- | 
 | [Annoy](https://github.com/spotify/annoy) | :x: | "in particular you can not add more items once the tree has been created" |
-| [FLANN](http://www.cs.ubc.ca/research/flann/) | :question: | |
+| [FLANN](http://www.cs.ubc.ca/research/flann/) | :white_check_mark: | "Working with dynamic point clouds without a need to rebuild entire kd-tree index" |
 | [scikit-learn](http://scikit-learn.org/stable/modules/neighbors.html): LSHForest, KDTree, BallTree | :question: | |
 | [PANNS](https://github.com/ryanrhymes/panns) | :question: | |
 | [NearPy](http://pixelogik.github.io/NearPy/) | :question: | |

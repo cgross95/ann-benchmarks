@@ -10,7 +10,7 @@ This project contains some tools to benchmark various implementations of approxi
 Evaluated
 =========
 
-| Method | Suppots dynamic updates | Notes on dynamic updates |
+| Method | Dynamic updates? | Notes on dynamic updates |
 | :----- | :---------------------: | :----------------------- | 
 | [Annoy](https://github.com/spotify/annoy) | :question: | |
 | [FLANN](http://www.cs.ubc.ca/research/flann/) | :question: | |

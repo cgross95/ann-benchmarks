@@ -16,8 +16,8 @@ Evaluated
 | [FLANN](http://www.cs.ubc.ca/research/flann/) | :white_check_mark: | "Working with dynamic point clouds without a need to rebuild entire kd-tree index" |
 | [scikit-learn](http://scikit-learn.org/stable/modules/neighbors.html): LSHForest, KDTree, BallTree | :x: | Requires rebuilding the tree each time |
 | [PANNS](https://github.com/ryanrhymes/panns) | :x: | Can be compared to old indices but needs to be recreated |
-| [NearPy](http://pixelogik.github.io/NearPy/) | :question: | |
-| [KGraph](https://github.com/aaalgo/kgraph) | :question: | |
+| [NearPy](http://pixelogik.github.io/NearPy/) | :x: | Rehashes with each new query vector |
+| [KGraph](https://github.com/aaalgo/kgraph) | :x: | The index file has to be rebuilt with each new dataset.  |
 | [NMSLIB (Non-Metric Space Library)](https://github.com/nmslib/nmslib): SWGraph, HNSW, BallTree, MPLSH | :question: | |
 | [hnswlib (a part of nmslib project)](https://github.com/nmslib/hnsw) | :question: | |
 | [RPForest](https://github.com/lyst/rpforest) | :question: | |

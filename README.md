@@ -12,31 +12,31 @@ Evaluated
 
 | Method | Dynamic updates? | Notes on dynamic updates |
 | :----- | :---------------------: | :----------------------- | 
-| [Annoy](https://github.com/spotify/annoy) | :question: | |
-| [FLANN](http://www.cs.ubc.ca/research/flann/) | :question: | |
-| [scikit-learn](http://scikit-learn.org/stable/modules/neighbors.html): LSHForest, KDTree, BallTree | :question: | |
-| [PANNS](https://github.com/ryanrhymes/panns) | :question: | |
-| [NearPy](http://pixelogik.github.io/NearPy/) | :question: | |
-| [KGraph](https://github.com/aaalgo/kgraph) | :question: | |
-| [NMSLIB (Non-Metric Space Library)](https://github.com/nmslib/nmslib): SWGraph, HNSW, BallTree, MPLSH | :question: | |
-| [hnswlib (a part of nmslib project)](https://github.com/nmslib/hnsw) | :question: | |
-| [RPForest](https://github.com/lyst/rpforest) | :question: | |
-| [FAISS](https://github.com/facebookresearch/faiss.git) | :question: | |
-| [DolphinnPy](https://github.com/ipsarros/DolphinnPy) | :question: | |
-| [Datasketch](https://github.com/ekzhu/datasketch) | :question: | |
-| [PyNNDescent](https://github.com/lmcinnes/pynndescent) | :question: | |
-| [MRPT](https://github.com/teemupitkanen/mrpt) | :question: | |
-| [NGT](https://github.com/yahoojapan/NGT): ONNG, PANNG, QG | :question: | |
-| [SPTAG](https://github.com/microsoft/SPTAG) | :question: | |
-| [PUFFINN](https://github.com/puffinn/puffinn) | :question: | |
-| [N2](https://github.com/kakao/n2) | :question: | |
-| [ScaNN](https://github.com/google-research/google-research/tree/master/scann) | :question: | |
-| [Elastiknn](https://github.com/alexklibisz/elastiknn) | :question: | |
-| [OpenSearch KNN](https://github.com/opensearch-project/k-NN) | :question: | |
-| [DiskANN](https://github.com/microsoft/diskann): Vamana, Vamana-PQ | :question: | |
-| [Vespa](https://github.com/vespa-engine/vespa) | :question: | |
-| [scipy](https://docs.scipy.org/doc/scipy/reference/spatial.html): cKDTree | :question: | |
-| [vald](https://github.com/vdaas/vald) | :question: | |
+| [Annoy](https://github.com/spotify/annoy) | :x: | "in particular you can not add more items once the tree has been created" |
+| [FLANN](http://www.cs.ubc.ca/research/flann/) | :heavy_check_mark: | "Working with dynamic point clouds without a need to rebuild entire kd-tree index" |
+| [scikit-learn](http://scikit-learn.org/stable/modules/neighbors.html): LSHForest, KDTree, BallTree | :x: | Requires rebuilding the tree each time |
+| [PANNS](https://github.com/ryanrhymes/panns) | :x: | Can be compared to old indices but needs to be recreated |
+| [NearPy](http://pixelogik.github.io/NearPy/) | :x: | Rehashes with each new query vector |
+| [KGraph](https://github.com/aaalgo/kgraph) | :x: | The index file has to be rebuilt with each new dataset.  |
+| [NMSLIB (Non-Metric Space Library)](https://github.com/nmslib/nmslib): SWGraph, HNSW, BallTree, MPLSH | :x: | Static data only |
+| [hnswlib (a part of nmslib project)](https://github.com/nmslib/hnsw) | :heavy_check_mark: | Updatable module |
+| [RPForest](https://github.com/lyst/rpforest) | :x: | Tree structures have to be rebuilt |
+| [FAISS](https://github.com/facebookresearch/faiss.git) | :x: | The x_i's are assumed to be fixed |
+| [DolphinnPy](https://github.com/ipsarros/DolphinnPy) | :x: | Hypeplane LSH family model |
+| [Datasketch](https://github.com/ekzhu/datasketch) | :x: | Rebuild index each time |
+| [PyNNDescent](https://github.com/lmcinnes/pynndescent) | :x: | Rebuild index each time |
+| [MRPT](https://github.com/teemupitkanen/mrpt) | :x: | Rebuild index each time |
+| [NGT](https://github.com/yahoojapan/NGT): ONNG, PANNG, QG | :x: | Project has evolved into VALD, which supports dynamic updating |
+| [SPTAG](https://github.com/microsoft/SPTAG) | :heavy_check_mark: | "Fresh update: Support online vector deletion and insertion" |
+| [PUFFINN](https://github.com/puffinn/puffinn) | :x: | Can insert points but needs to be rebuilt after insertion |
+| [N2](https://github.com/kakao/n2) | :x: | Rebuild each time, but can be split over several threads |
+| [ScaNN](https://github.com/google-research/google-research/tree/master/scann) | :x: | Works well with large data, but does not support dynamic updating |
+| [Elastiknn](https://github.com/alexklibisz/elastiknn) | :heavy_check_mark: | "Implementation based on standard Elasticsearch and Lucene primitives, entirely in the JVM. Indexing and querying scale horizontally with Elasticsearch." |
+| [OpenSearch KNN](https://github.com/opensearch-project/k-NN) | :x: | High latency in large dimensional vectors |
+| [DiskANN](https://github.com/microsoft/diskann): Vamana, Vamana-PQ | :heavy_check_mark: | Updates when points are added |
+| [Vespa](https://github.com/vespa-engine/vespa) | :heavy_check_mark: | "Vespa is self-repairing and dynamic" |
+| [scipy](https://docs.scipy.org/doc/scipy/reference/spatial.html): cKDTree | :x: | Tree structure needs to be rebuilt |
+| [vald](https://github.com/vdaas/vald) | :heavy_check_mark: | "Vald uses distributed index graphs so it continues to work during indexing" |
 | [dci-knn](https://github.com/ke-li/dci-knn) | :x: | |
 | [pydci](https://github.com/cgross95/pydci) | :heavy_check_mark: | |
 

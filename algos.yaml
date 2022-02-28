@@ -694,6 +694,21 @@ float:
               [100],
               [0.8]
             ]
+    pydci:
+      docker-tag: ann-benchmarks-pydci
+      module: ann_benchmarks.algorithms.pydci
+      constructor: PYDCIKNN
+      base-args: ["@dimension"]
+      run-groups:
+        pydci:
+            args: [
+              [10],
+              [3]
+            ]
+            query-args: [
+              [400],
+              [400]
+            ]
 
   angular:
     vamana(diskann):

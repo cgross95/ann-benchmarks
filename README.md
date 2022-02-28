@@ -23,9 +23,9 @@ Evaluated
 | [RPForest](https://github.com/lyst/rpforest) | :x: | Tree structures have to be rebuilt |
 | [FAISS](https://github.com/facebookresearch/faiss.git) | :x: | The x_i's are assumed to be fixed |
 | [DolphinnPy](https://github.com/ipsarros/DolphinnPy) | :x: | Hypeplane LSH family model |
-| [Datasketch](https://github.com/ekzhu/datasketch) | :x: | Rebuild each time|
-| [PyNNDescent](https://github.com/lmcinnes/pynndescent) | :question: | |
-| [MRPT](https://github.com/teemupitkanen/mrpt) | :question: | |
+| [Datasketch](https://github.com/ekzhu/datasketch) | :x: | Rebuild index each time |
+| [PyNNDescent](https://github.com/lmcinnes/pynndescent) | :x: | Rebuild index each time |
+| [MRPT](https://github.com/teemupitkanen/mrpt) | :x: | Rebuild index each time |
 | [NGT](https://github.com/yahoojapan/NGT): ONNG, PANNG, QG | :question: | |
 | [SPTAG](https://github.com/microsoft/SPTAG) | :question: | |
 | [PUFFINN](https://github.com/puffinn/puffinn) | :question: | |

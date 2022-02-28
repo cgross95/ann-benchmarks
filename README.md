@@ -29,11 +29,11 @@ Evaluated
 | [NGT](https://github.com/yahoojapan/NGT): ONNG, PANNG, QG | :question: | |
 | [SPTAG](https://github.com/microsoft/SPTAG) | :question: | |
 | [PUFFINN](https://github.com/puffinn/puffinn) | :x: | Can insert points but needs to be rebuilt after insertion |
-| [N2](https://github.com/kakao/n2) | :question: | |
-| [ScaNN](https://github.com/google-research/google-research/tree/master/scann) | :question: | |
-| [Elastiknn](https://github.com/alexklibisz/elastiknn) | :question: | |
-| [OpenSearch KNN](https://github.com/opensearch-project/k-NN) | :question: | |
-| [DiskANN](https://github.com/microsoft/diskann): Vamana, Vamana-PQ | :question: | |
+| [N2](https://github.com/kakao/n2) | :x: | Rebuild each time, but can be split over several threads |
+| [ScaNN](https://github.com/google-research/google-research/tree/master/scann) | :x: | Works well with large data, but does not support dynamic updating |
+| [Elastiknn](https://github.com/alexklibisz/elastiknn) | :✔️: | "Implementation based on standard Elasticsearch and Lucene primitives, entirely in the JVM. Indexing and querying scale horizontally with Elasticsearch." |
+| [OpenSearch KNN](https://github.com/opensearch-project/k-NN) | :x: | High latency in large dimensional vectors |
+| [DiskANN](https://github.com/microsoft/diskann): Vamana, Vamana-PQ | :✔️: | Updates when points are added |
 | [Vespa](https://github.com/vespa-engine/vespa) | :question: | |
 | [scipy](https://docs.scipy.org/doc/scipy/reference/spatial.html): cKDTree | :question: | |
 | [vald](https://github.com/vdaas/vald) | :question: | |

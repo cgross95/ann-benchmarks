@@ -20,10 +20,10 @@ Evaluated
 | [KGraph](https://github.com/aaalgo/kgraph) | :x: | The index file has to be rebuilt with each new dataset.  |
 | [NMSLIB (Non-Metric Space Library)](https://github.com/nmslib/nmslib): SWGraph, HNSW, BallTree, MPLSH | :question: | |
 | [hnswlib (a part of nmslib project)](https://github.com/nmslib/hnsw) | :question: | |
-| [RPForest](https://github.com/lyst/rpforest) | :question: | |
-| [FAISS](https://github.com/facebookresearch/faiss.git) | :question: | |
-| [DolphinnPy](https://github.com/ipsarros/DolphinnPy) | :question: | |
-| [Datasketch](https://github.com/ekzhu/datasketch) | :question: | |
+| [RPForest](https://github.com/lyst/rpforest) | :x: | Tree structures have to be rebuilt |
+| [FAISS](https://github.com/facebookresearch/faiss.git) | :x: | The x_i's are assumed to be fixed |
+| [DolphinnPy](https://github.com/ipsarros/DolphinnPy) | :x: | Hypeplane LSH family model |
+| [Datasketch](https://github.com/ekzhu/datasketch) | :x: | Rebuild each time|
 | [PyNNDescent](https://github.com/lmcinnes/pynndescent) | :question: | |
 | [MRPT](https://github.com/teemupitkanen/mrpt) | :question: | |
 | [NGT](https://github.com/yahoojapan/NGT): ONNG, PANNG, QG | :question: | |

@@ -13,7 +13,7 @@ Evaluated
 | Method | Dynamic updates? | Notes on dynamic updates |
 | :----- | :---------------------: | :----------------------- | 
 | [Annoy](https://github.com/spotify/annoy) | :x: | "in particular you can not add more items once the tree has been created" |
-| [FLANN](http://www.cs.ubc.ca/research/flann/) | :white_check_mark: | "Working with dynamic point clouds without a need to rebuild entire kd-tree index" |
+| [FLANN](http://www.cs.ubc.ca/research/flann/) | :heavy_check_mark: | "Working with dynamic point clouds without a need to rebuild entire kd-tree index" |
 | [scikit-learn](http://scikit-learn.org/stable/modules/neighbors.html): LSHForest, KDTree, BallTree | :x: | Requires rebuilding the tree each time |
 | [PANNS](https://github.com/ryanrhymes/panns) | :x: | Can be compared to old indices but needs to be recreated |
 | [NearPy](http://pixelogik.github.io/NearPy/) | :x: | Rehashes with each new query vector |
@@ -34,7 +34,7 @@ Evaluated
 | [Elastiknn](https://github.com/alexklibisz/elastiknn) | :heavy_check_mark: | "Implementation based on standard Elasticsearch and Lucene primitives, entirely in the JVM. Indexing and querying scale horizontally with Elasticsearch." |
 | [OpenSearch KNN](https://github.com/opensearch-project/k-NN) | :x: | High latency in large dimensional vectors |
 | [DiskANN](https://github.com/microsoft/diskann): Vamana, Vamana-PQ | :heavy_check_mark: | Updates when points are added |
-| [Vespa](https://github.com/vespa-engine/vespa) | :question: | |
+| [Vespa](https://github.com/vespa-engine/vespa) | :heavy_check_mark: | "Vespa is self-repairing and dynamic" |
 | [scipy](https://docs.scipy.org/doc/scipy/reference/spatial.html): cKDTree | :question: | |
 | [vald](https://github.com/vdaas/vald) | :question: | |
 | [dci-knn](https://github.com/ke-li/dci-knn) | :x: | |

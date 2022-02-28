@@ -18,16 +18,16 @@ Evaluated
 | [PANNS](https://github.com/ryanrhymes/panns) | :x: | Can be compared to old indices but needs to be recreated |
 | [NearPy](http://pixelogik.github.io/NearPy/) | :x: | Rehashes with each new query vector |
 | [KGraph](https://github.com/aaalgo/kgraph) | :x: | The index file has to be rebuilt with each new dataset.  |
-| [NMSLIB (Non-Metric Space Library)](https://github.com/nmslib/nmslib): SWGraph, HNSW, BallTree, MPLSH | :question: | |
-| [hnswlib (a part of nmslib project)](https://github.com/nmslib/hnsw) | :question: | |
+| [NMSLIB (Non-Metric Space Library)](https://github.com/nmslib/nmslib): SWGraph, HNSW, BallTree, MPLSH | :x: | Static data only |
+| [hnswlib (a part of nmslib project)](https://github.com/nmslib/hnsw) | :heavy_check_mark: | Updatable module |
 | [RPForest](https://github.com/lyst/rpforest) | :x: | Tree structures have to be rebuilt |
 | [FAISS](https://github.com/facebookresearch/faiss.git) | :x: | The x_i's are assumed to be fixed |
 | [DolphinnPy](https://github.com/ipsarros/DolphinnPy) | :x: | Hypeplane LSH family model |
 | [Datasketch](https://github.com/ekzhu/datasketch) | :x: | Rebuild index each time |
 | [PyNNDescent](https://github.com/lmcinnes/pynndescent) | :x: | Rebuild index each time |
 | [MRPT](https://github.com/teemupitkanen/mrpt) | :x: | Rebuild index each time |
-| [NGT](https://github.com/yahoojapan/NGT): ONNG, PANNG, QG | :question: | |
-| [SPTAG](https://github.com/microsoft/SPTAG) | :question: | |
+| [NGT](https://github.com/yahoojapan/NGT): ONNG, PANNG, QG | :x: | Project has evolved into VALD, which supports dynamic updating |
+| [SPTAG](https://github.com/microsoft/SPTAG) | :heavy_check_mark: | "Fresh update: Support online vector deletion and insertion" |
 | [PUFFINN](https://github.com/puffinn/puffinn) | :x: | Can insert points but needs to be rebuilt after insertion |
 | [N2](https://github.com/kakao/n2) | :x: | Rebuild each time, but can be split over several threads |
 | [ScaNN](https://github.com/google-research/google-research/tree/master/scann) | :x: | Works well with large data, but does not support dynamic updating |

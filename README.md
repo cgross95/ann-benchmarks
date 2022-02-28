@@ -35,8 +35,8 @@ Evaluated
 | [OpenSearch KNN](https://github.com/opensearch-project/k-NN) | :x: | High latency in large dimensional vectors |
 | [DiskANN](https://github.com/microsoft/diskann): Vamana, Vamana-PQ | :heavy_check_mark: | Updates when points are added |
 | [Vespa](https://github.com/vespa-engine/vespa) | :heavy_check_mark: | "Vespa is self-repairing and dynamic" |
-| [scipy](https://docs.scipy.org/doc/scipy/reference/spatial.html): cKDTree | :question: | |
-| [vald](https://github.com/vdaas/vald) | :question: | |
+| [scipy](https://docs.scipy.org/doc/scipy/reference/spatial.html): cKDTree | :x: | Tree structure needs to be rebuilt |
+| [vald](https://github.com/vdaas/vald) | :heavy_check_mark: | "Vald uses distributed index graphs so it continues to work during indexing" |
 | [dci-knn](https://github.com/ke-li/dci-knn) | :x: | |
 | [pydci](https://github.com/cgross95/pydci) | :heavy_check_mark: | |
 

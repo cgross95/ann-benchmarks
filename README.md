@@ -28,7 +28,7 @@ Evaluated
 | [MRPT](https://github.com/teemupitkanen/mrpt) | :x: | Rebuild index each time |
 | [NGT](https://github.com/yahoojapan/NGT): ONNG, PANNG, QG | :question: | |
 | [SPTAG](https://github.com/microsoft/SPTAG) | :question: | |
-| [PUFFINN](https://github.com/puffinn/puffinn) | :question: | |
+| [PUFFINN](https://github.com/puffinn/puffinn) | :x: | Can insert points but needs to be rebuilt after insertion |
 | [N2](https://github.com/kakao/n2) | :question: | |
 | [ScaNN](https://github.com/google-research/google-research/tree/master/scann) | :question: | |
 | [Elastiknn](https://github.com/alexklibisz/elastiknn) | :question: | |

@@ -52,7 +52,7 @@ def run_individual_query_dynamic(algo, X_train, step, radius, distance,
             start = time.time()
             candidates = algo.query(v, count)
             total = (time.time() - start)
-        candidates = [(int(idx), float(metrics[distance]['distance'](v, X_train[idx])))  # noqa
+        candidates = [(int(idx), float(metrics[distance]['distance'](v, X_train[int(idx)])))  # noqa
                       for idx in candidates]
         n_items_processed[0] += 1
         if n_items_processed[0] % 1000 == 0:

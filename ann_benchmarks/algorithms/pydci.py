@@ -25,8 +25,9 @@ class PYDCIKNN(BaseANN):
         if self._fitted:
             self._dci = DCI(self._dim, self._num_simple, self._num_composite,
                             X)
-        self._dci.add(X)
-        self._fitted = True
+        else:
+            self._dci.add(X)
+            self._fitted = True
 
     def set_query_arguments(self, max_retrieve, max_composite_visit):
         self._max_retrieve = max_retrieve
@@ -34,7 +35,9 @@ class PYDCIKNN(BaseANN):
 
     def query(self, v, n):
         # TODO: This gives back the points, not the indices
-        return self._dci.query(np.array([v]), k=n,
-                               max_retrieve=self._max_retrieve,
-                               max_composite_visit=self._max_composite_visit,
-                               )
+        indices, points = self._dci.query(
+                np.array([v]), k=n,
+                max_retrieve=self._max_retrieve,
+                max_composite_visit=self._max_composite_visit,
+                )
+        return indices

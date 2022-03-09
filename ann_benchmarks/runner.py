@@ -36,7 +36,11 @@ def run_individual_query_dynamic(algo, X_train, step, radius, distance,
         # j is index of query in X_train
         t0 = time.time()
         memory_usage_before = algo.get_memory_usage()
-        algo.fit(X_train[:j])
+        # Allow dynamic update if available
+        if hasattr(algo, "update"):
+            algo.update(X_train[j - step:j])
+        else:
+            algo.fit(X_train[:j])
         build_time = time.time() - t0
         index_size = algo.get_memory_usage() - memory_usage_before
         v = X_train[j]

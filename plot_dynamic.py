@@ -43,6 +43,8 @@ if __name__ == "__main__":
 
     args.algorithms.sort()
     if not args.output:
+        if not os.path.isdir('results/dynamic'):
+            os.mkdir('results/dynamic')
         args.output = 'results/dynamic/%s_%s.png' % (args.dataset,
                                                      '_'.join(args.algorithms))
     results = {}
@@ -59,16 +61,19 @@ if __name__ == "__main__":
         for result_file in result_files:
             result_name, _ = os.path.splitext(os.path.basename(result_file))
             alg_label = f'{alg}_{result_name}'
-            with h5py.File(result_file, 'r+') as f:
-                build_times = np.array(f['build_times'])
-                search_times = np.array(f['search_times'])
-                total_times = build_times + search_times
-                dataset, _ = get_dataset(args.dataset)
-                recalls = recall(dataset['neighbors'], f['neighbors'])
-                axs[0].plot(build_times, label=alg_label)
-                axs[1].plot(search_times, label=alg_label)
-                axs[2].plot(total_times, label=alg_label)
-                axs[3].plot(recalls, label=alg_label)
+            try:
+                with h5py.File(result_file, 'r+') as f:
+                    build_times = np.array(f['build_times'])
+                    search_times = np.array(f['search_times'])
+                    total_times = build_times + search_times
+                    dataset, _ = get_dataset(args.dataset)
+                    recalls = recall(dataset['neighbors'], f['neighbors'])
+                    axs[0].plot(build_times, label=alg_label)
+                    axs[1].plot(search_times, label=alg_label)
+                    axs[2].plot(total_times, label=alg_label)
+                    axs[3].plot(recalls, label=alg_label)
+            except OSError as error:
+                raise OSError('Check owner of result files.')
     axs[0].set_ylabel('Time to build index (sec)')
     axs[1].set_ylabel('Time to search (sec)')
     axs[2].set_ylabel('Total time (sec)')

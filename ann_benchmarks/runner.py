@@ -19,7 +19,7 @@ from ann_benchmarks.results import store_results, store_results_dynamic
 
 
 def run_individual_query_dynamic(algo, X_train, step, radius, distance,
-                                 run_count):
+                                 run_count, query_arguments):
     prepared_queries = hasattr(algo, "prepare_query")
 
     num_test = (len(X_train) // step) - 1
@@ -37,7 +37,7 @@ def run_individual_query_dynamic(algo, X_train, step, radius, distance,
         t0 = time.time()
         memory_usage_before = algo.get_memory_usage()
         # Allow dynamic update if available
-        if hasattr(algo, "update"):
+        if j > step and hasattr(algo, "update"):
             algo.update(X_train[j - step:j])
         else:
             algo.fit(X_train[:j])
@@ -46,6 +46,8 @@ def run_individual_query_dynamic(algo, X_train, step, radius, distance,
         v = X_train[j]
         print(f'Processing query {j} on model that built in {build_time}')
         count = int(radius * j)
+        if query_arguments:
+            algo.set_query_arguments(*query_arguments)
         if prepared_queries:
             algo.prepare_query(v, count)
             start = time.time()
@@ -191,10 +193,9 @@ function""" % (definition.module, definition.constructor, definition.arguments)
         for pos, query_arguments in enumerate(query_argument_groups, 1):
             print("Running query argument group %d of %d..." %
                   (pos, len(query_argument_groups)))
-            if query_arguments:
-                algo.set_query_arguments(*query_arguments)
             descriptor, results = run_individual_query_dynamic(
-                algo, X_train, step, radius, distance, run_count)
+                algo, X_train, step, radius, distance, run_count,
+                query_arguments)
             descriptor["algo"] = definition.algorithm
             descriptor["dataset"] = dataset
             store_results_dynamic(dataset, max_count, definition,

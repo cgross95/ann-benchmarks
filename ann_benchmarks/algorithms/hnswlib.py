@@ -24,6 +24,10 @@ class HnswLib(BaseANN):
         self.p.add_items(np.asarray(X), data_labels)
         self.p.set_num_threads(1)
 
+    def update(self, X):
+        data_labels = self.p.element_count + np.arange(len(X))
+        self.p.add_items(np.asarray(X), data_labels)
+
     def set_query_arguments(self, ef):
         self.p.set_ef(ef)
 

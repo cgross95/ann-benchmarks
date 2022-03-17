@@ -139,11 +139,12 @@ def main():
     if os.path.exists(INDEX_DIR):
         shutil.rmtree(INDEX_DIR)
 
-    dataset, dimension = get_dataset(args.dataset)
+    dataset, dimension, num_elements = get_dataset(args.dataset)
     point_type = dataset.attrs.get('point_type', 'float')
     distance = dataset.attrs['distance']
     definitions = get_definitions(
-        args.definitions, dimension, point_type, distance, args.count)
+        args.definitions, dimension, num_elements, point_type, distance,
+        args.count)
 
     # Filter out, from the loaded definitions, all those query argument groups
     # that correspond to experiments that have already been run. (This might

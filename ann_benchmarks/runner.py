@@ -169,7 +169,7 @@ error: query argument groups have been specified for %s.%s(%s), but the \
 algorithm instantiated from it does not implement the set_query_arguments \
 function""" % (definition.module, definition.constructor, definition.arguments)
 
-    D, dimension = get_dataset(dataset)
+    D, dimension, num_elements = get_dataset(dataset)
     X_train = numpy.array(D['train'])
     distance = D.attrs['distance']
     radius = D.attrs['radius']
@@ -212,7 +212,7 @@ error: query argument groups have been specified for %s.%s(%s), but the \
 algorithm instantiated from it does not implement the set_query_arguments \
 function""" % (definition.module, definition.constructor, definition.arguments)
 
-    D, dimension = get_dataset(dataset)
+    D, dimension, num_elements = get_dataset(dataset)
     X_train = numpy.array(D['train'])
     X_test = numpy.array(D['test'])
     distance = D.attrs['distance']

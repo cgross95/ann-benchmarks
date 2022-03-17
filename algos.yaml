@@ -62,7 +62,7 @@ float:
       docker-tag: ann-benchmarks-hnswlib
       module: ann_benchmarks.algorithms.hnswlib
       constructor: HnswLib
-      base-args: ["@metric"]
+      base-args: ["@dimension", "@metric", "@num_elements"]
       run-groups:
         M-4:
           arg-groups:

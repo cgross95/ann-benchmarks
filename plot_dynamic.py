@@ -66,7 +66,7 @@ if __name__ == "__main__":
                     build_times = np.array(f['build_times'])
                     search_times = np.array(f['search_times'])
                     total_times = build_times + search_times
-                    dataset, _ = get_dataset(args.dataset)
+                    dataset, _, _ = get_dataset(args.dataset)
                     recalls = recall(dataset['neighbors'], f['neighbors'])
                     axs[0].plot(build_times, label=alg_label)
                     axs[1].plot(search_times, label=alg_label)

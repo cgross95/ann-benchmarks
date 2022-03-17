@@ -96,8 +96,8 @@ def get_unique_algorithms(definition_file):
     return list(sorted(algos))
 
 
-def get_definitions(definition_file, dimension, point_type="float",
-                    distance_metric="euclidean", count=10):
+def get_definitions(definition_file, dimension, num_elements,
+                    point_type="float", distance_metric="euclidean", count=10):
     definitions = _get_definitions(definition_file)
 
     algorithm_definitions = {}
@@ -157,7 +157,8 @@ def get_definitions(definition_file, dimension, point_type="float",
                 vs = {
                     "@count": count,
                     "@metric": distance_metric,
-                    "@dimension": dimension
+                    "@dimension": dimension,
+                    "@num_elements": num_elements
                 }
                 aargs = [_substitute_variables(arg, vs) for arg in aargs]
                 definitions.append(Definition(

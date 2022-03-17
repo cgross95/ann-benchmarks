@@ -38,8 +38,9 @@ def get_dataset(which):
     # here for backward compatibility, to ensure old datasets can still be used with newer versions
     # cast to integer because the json parser (later on) cannot interpret numpy integers
     dimension = int(hdf5_f.attrs['dimension']) if 'dimension' in hdf5_f.attrs else len(hdf5_f['train'][0])
+    num_elements = int(hdf5_f.attrs['num_elements']) if  'num_elements' in hdf5_f.attrs else len(hdf5_f['train'])
 
-    return hdf5_f, dimension
+    return hdf5_f, dimension, num_elements
 
 
 # Everything below this line is related to creating datasets
@@ -56,6 +57,7 @@ def write_dynamic_output(train, fn, distance, point_type='float',
     f.attrs['type'] = 'dense'
     f.attrs['distance'] = distance
     f.attrs['dimension'] = len(train[0])
+    f.attrs['num_elements'] = len(train)
     f.attrs['point_type'] = point_type
     f.attrs['radius'] = radius
     f.attrs['step'] = step
@@ -501,7 +503,7 @@ def siemens_dynamic(out_fn, dataset, radius=0.1, step=50):
         with open(csv_fn, newline='') as csv_f:
             reader = csv.reader(csv_f)
             reader.__next__()  # Burn header row
-            max_points = 50000
+            max_points = -1
             for i, row in enumerate(reader):
                 if i == max_points:
                     break

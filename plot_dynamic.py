@@ -1,4 +1,5 @@
 import os
+import copy
 import matplotlib as mpl
 mpl.use('Agg')  # noqa
 import matplotlib.pyplot as plt
@@ -23,7 +24,14 @@ def recall(dataset_neighbors, alg_neighbors):
             alg_indices = alg_neighbors[i]
         recalls.append(len(np.intersect1d(dataset_indices,
                        alg_indices)) / len(dataset_indices))
-    return recalls
+    return np.array(recalls)
+
+
+def moving_average(a, n=3):
+    # From https://stackoverflow.com/questions/14313510/how-to-calculate-rolling-moving-average-using-python-numpy-scipy
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
 
 
 if __name__ == "__main__":
@@ -35,18 +43,47 @@ if __name__ == "__main__":
     parser.add_argument(
         '--algorithms',
         metavar='ALG',
-        nargs='*',
+        nargs='+',
+        required=True,
         help='List of algorithms to plot')
+    parser.add_argument(
+        '--best_metric',
+        nargs='+',
+        choices=[
+            'build_time',
+            'query_time',
+            'total_time',
+            'recall'
+        ],
+        help='Plot only the result from each algorithm with the best average value (over all query) in this metric')
+    parser.add_argument(
+        '--smooth',
+        action='store_true',
+        help='Smooth out all plots by taking rolling average'
+    )
     parser.add_argument(
         '-o', '--output')
     args = parser.parse_args()
 
     args.algorithms.sort()
+    if args.best_metric:
+        args.best_metric.sort()
+        args.best_metric = set(args.best_metric)
+
+    def plot_mod(t):
+        if args.smooth:
+            moving_average(t)
+        else:
+            return t
+
     if not args.output:
         if not os.path.isdir('results/dynamic'):
             os.mkdir('results/dynamic')
-        args.output = 'results/dynamic/%s_%s.png' % (args.dataset,
-                                                     '_'.join(args.algorithms))
+        args.output = 'results/dynamic/%s_%s' % (args.dataset,
+                                                 '_'.join(args.algorithms))
+        if args.best_metric:
+            args.output += '_' + '_'.join(args.best_metric)
+        args.output += '.png'
     results = {}
     for alg in args.algorithms:
         results[alg] = []
@@ -57,23 +94,68 @@ if __name__ == "__main__":
             results[alg].append(result_file)
 
     fig, axs = plt.subplots(4, 1, figsize=(5, 20))
+    alg_metrics = {}
+    if args.best_metric:
+        average_alg_metrics = {metric: {} for metric in args.best_metric}
     for alg, result_files in results.items():
+        if args.best_metric:
+            for average_alg_metric in average_alg_metrics.values():
+                average_alg_metric[alg] = {
+                    'average': np.inf,  # Assumes lower is better
+                    'label': None,
+                    'metrics': None
+                }
         for result_file in result_files:
             result_name, _ = os.path.splitext(os.path.basename(result_file))
             alg_label = f'{alg}_{result_name}'
             try:
                 with h5py.File(result_file, 'r+') as f:
-                    build_times = np.array(f['build_times'])
-                    search_times = np.array(f['search_times'])
-                    total_times = build_times + search_times
+                    alg_metrics['build_time'] = np.array(f['build_times'])
+                    alg_metrics['search_time'] = np.array(f['search_times'])
+                    alg_metrics['total_time'] = alg_metrics['build_time'] + \
+                        alg_metrics['search_time']
                     dataset, _, _ = get_dataset(args.dataset)
-                    recalls = recall(dataset['neighbors'], f['neighbors'])
-                    axs[0].plot(build_times, label=alg_label)
-                    axs[1].plot(search_times, label=alg_label)
-                    axs[2].plot(total_times, label=alg_label)
-                    axs[3].plot(recalls, label=alg_label)
+                    # Negate recall so lower is better
+                    alg_metrics['recall'] = -recall(
+                        dataset['neighbors'], f['neighbors'])
+                    if args.best_metric:
+                        for metric in args.best_metric:
+                            # Average over last 10% of runs
+                            num_average = int(
+                                0.1 * len(alg_metrics['build_time']))
+                            average = np.mean(
+                                alg_metrics[metric][-num_average:])
+                            if (average_alg_metrics[metric][alg]['average']
+                                    > average):
+                                average_alg_metrics[metric][alg]['average'] =\
+                                    average
+                                average_alg_metrics[metric][alg]['label'] =\
+                                    alg_label
+                                average_alg_metrics[metric][alg]['metrics'] =\
+                                    copy.deepcopy(alg_metrics)
+                    else:
+                        axs[0].plot(plot_mod(alg_metrics['build_time']), label=alg_label)
+                        axs[1].plot(plot_mod(alg_metrics['search_time']),
+                                    label=alg_label)
+                        axs[2].plot(plot_mod(alg_metrics['total_time']),
+                                    label=alg_label)
+                        # Make sure to un-negate recall
+                        axs[3].plot(plot_mod(-alg_metrics['recall']), label=alg_label)
             except OSError as error:
                 raise OSError('Check owner of result files.')
+    if args.best_metric:
+        for metric, average_alg_metric in average_alg_metrics.items():
+            for arg_data in average_alg_metric.values():
+                alg_metrics = arg_data['metrics']
+                alg_label = f"{arg_data['label']}, (best {metric})"
+                axs[0].plot(plot_mod(alg_metrics['build_time']), label=alg_label)
+                axs[1].plot(plot_mod(alg_metrics['search_time']),
+                            label=alg_label)
+                axs[2].plot(plot_mod(alg_metrics['total_time']),
+                            label=alg_label)
+                # Make sure to un-negate recall
+                axs[3].plot(plot_mod(-alg_metrics['recall']), label=alg_label)
+
     axs[0].set_ylabel('Time to build index (sec)')
     axs[1].set_ylabel('Time to search (sec)')
     axs[2].set_ylabel('Total time (sec)')
@@ -82,5 +164,3 @@ if __name__ == "__main__":
         ax.set_xlabel('Iteration Number')
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 9})
     fig.savefig(args.output, bbox_inches='tight')
-
-

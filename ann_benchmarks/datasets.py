@@ -509,7 +509,7 @@ def siemens_dynamic(out_fn, dataset, radius=0.1, step=50):
                     break
                 # Assume first two columns are not features
                 X.append(list(map(float, row[2:])))
-        write_dynamic_output(numpy.array(X), out_fn, 'euclidean',
+        write_dynamic_output(numpy.array(X, dtype=numpy.float32), out_fn, 'euclidean',
                              radius=radius, step=step)
 
 

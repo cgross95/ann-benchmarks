@@ -27,7 +27,7 @@ def recall(dataset_neighbors, alg_neighbors):
     return np.array(recalls)
 
 
-def moving_average(a, n=3):
+def moving_average(a, n=100):
     # From https://stackoverflow.com/questions/14313510/how-to-calculate-rolling-moving-average-using-python-numpy-scipy
     ret = np.cumsum(a, dtype=float)
     ret[n:] = ret[n:] - ret[:-n]
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     def plot_mod(t):
         if args.smooth:
-            moving_average(t)
+            return moving_average(t)
         else:
             return t
 

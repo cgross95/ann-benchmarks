@@ -702,12 +702,12 @@ float:
       run-groups:
         pydci:
             args: [
-              [10],
-              [3]
+              [5],
+              [2]
             ]
             query-args: [
-              [400],
-              [400]
+              [3],
+              [3]
             ]
 
   angular:

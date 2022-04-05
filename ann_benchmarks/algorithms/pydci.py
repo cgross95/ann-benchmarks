@@ -13,8 +13,8 @@ class PYDCIKNN(BaseANN):
         self._num_composite = num_composite
 
         # query arguments
-        self._max_retrieve = None
-        self._max_composite_visit = None
+        self._max_retrieve_const = None
+        self._max_composite_visit_const = None
 
         # set up empty database
         self._dci = DCI(dim, num_simple, num_composite)
@@ -33,14 +33,15 @@ class PYDCIKNN(BaseANN):
         self._dci.add(X)
         self._fitted = True
 
-    def set_query_arguments(self, max_retrieve, max_composite_visit):
-        self._max_retrieve = max_retrieve
-        self._max_composite_visit = max_composite_visit
+    def set_query_arguments(self, max_retrieve_const,
+                            max_composite_visit_const):
+        self._max_retrieve_const = max_retrieve_const
+        self._max_composite_visit_const = max_composite_visit_const
 
     def query(self, v, n):
-        indices, points = self._dci.query(
-                np.array([v]), k=n,
-                max_retrieve=self._max_retrieve,
-                max_composite_visit=self._max_composite_visit,
-                )
+        indices, _, _ = self._dci.query(
+            np.array([v]), k=n,
+            max_retrieve_const=self._max_retrieve_const,
+            max_composite_visit_const=self._max_composite_visit_const,
+        )
         return indices

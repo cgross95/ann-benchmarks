@@ -27,6 +27,30 @@ def recall(dataset_neighbors, alg_neighbors):
     return np.array(recalls)
 
 
+def approximation_ratio(data, step, dataset_neighbors, alg_neighbors):
+    ratios = []
+    for i in range(len(dataset_neighbors)):
+        query = data[(i + 1) * step]
+        try:
+            num_dataset_indices = np.nonzero(dataset_neighbors[i] == -1)[0][0]
+            dataset_indices = dataset_neighbors[i][:num_dataset_indices]
+        except IndexError:
+            dataset_indices = dataset_neighbors[i]
+        dataset_indices.sort()
+        try:
+            num_alg_indices = np.nonzero(alg_neighbors[i] == -1)[0][0]
+            alg_indices = alg_neighbors[i][:num_alg_indices]
+        except IndexError:
+            alg_indices = alg_neighbors[i]
+        alg_indices.sort()
+        max_true_dist = np.max(np.linalg.norm(
+            data[dataset_indices] - query, axis=1))
+        max_approx_dist = np.max(np.linalg.norm(
+            data[alg_indices] - query, axis=1))
+        ratios.append(max_true_dist / max_approx_dist)
+    return np.array(ratios)
+
+
 def moving_average(a, n=100):
     # From https://stackoverflow.com/questions/14313510/how-to-calculate-rolling-moving-average-using-python-numpy-scipy
     ret = np.cumsum(a, dtype=float)
@@ -53,7 +77,8 @@ if __name__ == "__main__":
             'build_time',
             'query_time',
             'total_time',
-            'recall'
+            'recall',
+            'ratio'
         ],
         help='Plot only the result from each algorithm with the best average value (over all query) in this metric')
     parser.add_argument(
@@ -118,6 +143,10 @@ if __name__ == "__main__":
                     # Negate recall so lower is better
                     alg_metrics['recall'] = -recall(
                         dataset['neighbors'], f['neighbors'])
+                    # Negate approximation ratio so lower is better
+                    alg_metrics['ratio'] = -approximation_ratio(
+                        dataset['train'], dataset.attrs['step'],
+                        dataset['neighbors'], f['neighbors'])
                     if args.best_metric:
                         for metric in args.best_metric:
                             # Average over last 10% of runs
@@ -134,13 +163,18 @@ if __name__ == "__main__":
                                 average_alg_metrics[metric][alg]['metrics'] =\
                                     copy.deepcopy(alg_metrics)
                     else:
-                        axs[0].plot(plot_mod(alg_metrics['build_time']), label=alg_label)
+                        axs[0].plot(
+                            plot_mod(alg_metrics['build_time']), label=alg_label)
                         axs[1].plot(plot_mod(alg_metrics['search_time']),
                                     label=alg_label)
                         axs[2].plot(plot_mod(alg_metrics['total_time']),
                                     label=alg_label)
                         # Make sure to un-negate recall
-                        axs[3].plot(plot_mod(-alg_metrics['recall']), label=alg_label)
+                        axs[3].plot(
+                            plot_mod(-alg_metrics['recall']), label=alg_label)
+                        # Make sure to un-negate approximation ratios
+                        axs[4].plot(
+                            plot_mod(-alg_metrics['ratio']), label=alg_label)
             except OSError as error:
                 raise OSError('Check owner of result files.')
     if args.best_metric:
@@ -148,18 +182,22 @@ if __name__ == "__main__":
             for arg_data in average_alg_metric.values():
                 alg_metrics = arg_data['metrics']
                 alg_label = f"{arg_data['label']}, (best {metric})"
-                axs[0].plot(plot_mod(alg_metrics['build_time']), label=alg_label)
+                axs[0].plot(plot_mod(alg_metrics['build_time']),
+                            label=alg_label)
                 axs[1].plot(plot_mod(alg_metrics['search_time']),
                             label=alg_label)
                 axs[2].plot(plot_mod(alg_metrics['total_time']),
                             label=alg_label)
                 # Make sure to un-negate recall
                 axs[3].plot(plot_mod(-alg_metrics['recall']), label=alg_label)
+                # Make sure to un-negate approximation ratios
+                axs[4].plot(plot_mod(-alg_metrics['ratio']), label=alg_label)
 
     axs[0].set_ylabel('Time to build index (sec)')
     axs[1].set_ylabel('Time to search (sec)')
     axs[2].set_ylabel('Total time (sec)')
     axs[3].set_ylabel('Recall')
+    axs[4].set_ylabel('Approximation ratio')
     for ax in axs:
         ax.set_xlabel('Iteration Number')
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 9})

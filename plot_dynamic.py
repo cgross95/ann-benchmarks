@@ -39,11 +39,11 @@ def approximation_ratio(data, step, dataset_max_distances, alg_neighbors):
         if len(alg_indices) == 0:
             max_approx_dist = np.inf
         else:
-            alg_indices.sort()
-            print(alg_indices)
-            max_approx_dist = np.amax(np.linalg.norm(
-                data[alg_indices] - query, axis=1))
-        print(f'{dataset_max_distances[i]} / {max_approx_dist}')
+            # alg_indices.sort()
+            # max_approx_dist = np.amax(np.linalg.norm(
+            #     data[alg_indices] - query, axis=1))
+            # Assumes furthest point is at the end of the list
+            max_approx_dist = np.linalg.norm(data[alg_indices[-1]] - query)
         ratios.append(dataset_max_distances[i] / max_approx_dist)
     return np.array(ratios)
 

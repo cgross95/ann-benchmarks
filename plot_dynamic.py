@@ -27,27 +27,24 @@ def recall(dataset_neighbors, alg_neighbors):
     return np.array(recalls)
 
 
-def approximation_ratio(data, step, dataset_neighbors, alg_neighbors):
+def approximation_ratio(data, step, dataset_max_distances, alg_neighbors):
     ratios = []
-    for i in range(len(dataset_neighbors)):
+    for i in range(len(alg_neighbors)):
         query = data[(i + 1) * step]
-        try:
-            num_dataset_indices = np.nonzero(dataset_neighbors[i] == -1)[0][0]
-            dataset_indices = dataset_neighbors[i][:num_dataset_indices]
-        except IndexError:
-            dataset_indices = dataset_neighbors[i]
-        dataset_indices.sort()
         try:
             num_alg_indices = np.nonzero(alg_neighbors[i] == -1)[0][0]
             alg_indices = alg_neighbors[i][:num_alg_indices]
         except IndexError:
             alg_indices = alg_neighbors[i]
-        alg_indices.sort()
-        max_true_dist = np.max(np.linalg.norm(
-            data[dataset_indices] - query, axis=1))
-        max_approx_dist = np.max(np.linalg.norm(
-            data[alg_indices] - query, axis=1))
-        ratios.append(max_true_dist / max_approx_dist)
+        if len(alg_indices) == 0:
+            max_approx_dist = np.inf
+        else:
+            alg_indices.sort()
+            print(alg_indices)
+            max_approx_dist = np.amax(np.linalg.norm(
+                data[alg_indices] - query, axis=1))
+        print(f'{dataset_max_distances[i]} / {max_approx_dist}')
+        ratios.append(dataset_max_distances[i] / max_approx_dist)
     return np.array(ratios)
 
 
@@ -92,8 +89,8 @@ if __name__ == "__main__":
 
     args.algorithms.sort()
     if args.best_metric:
+        args.best_metric = list(set(args.best_metric))
         args.best_metric.sort()
-        args.best_metric = set(args.best_metric)
 
     def plot_mod(t):
         if args.smooth:
@@ -118,7 +115,16 @@ if __name__ == "__main__":
         for result_file in os.scandir(alg_dir):
             results[alg].append(result_file)
 
-    fig, axs = plt.subplots(4, 1, figsize=(5, 20))
+    # Load/cache dataset
+    dataset, _, _ = get_dataset(args.dataset)
+    data = dataset['train']
+    dataset_neighbors = dataset['neighbors']
+    dataset_distances = np.array(dataset['distances'])
+    dataset_max_distances = np.max(
+        np.where(dataset_distances < float('inf'), dataset_distances, -np.inf),
+        axis=1)
+
+    fig, axs = plt.subplots(5, 1, figsize=(5, 25))
     alg_metrics = {}
     if args.best_metric:
         average_alg_metrics = {metric: {} for metric in args.best_metric}
@@ -139,14 +145,13 @@ if __name__ == "__main__":
                     alg_metrics['search_time'] = np.array(f['search_times'])
                     alg_metrics['total_time'] = alg_metrics['build_time'] + \
                         alg_metrics['search_time']
-                    dataset, _, _ = get_dataset(args.dataset)
                     # Negate recall so lower is better
                     alg_metrics['recall'] = -recall(
-                        dataset['neighbors'], f['neighbors'])
+                        dataset_neighbors, f['neighbors'])
                     # Negate approximation ratio so lower is better
                     alg_metrics['ratio'] = -approximation_ratio(
-                        dataset['train'], dataset.attrs['step'],
-                        dataset['neighbors'], f['neighbors'])
+                        data, dataset.attrs['step'], dataset_max_distances,
+                        f['neighbors'])
                     if args.best_metric:
                         for metric in args.best_metric:
                             # Average over last 10% of runs

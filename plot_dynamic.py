@@ -7,6 +7,7 @@ import numpy as np
 import argparse
 import h5py
 from ann_benchmarks.datasets import get_dataset
+from ann_benchmarks.plotting.utils import create_linestyles
 
 
 def recall(dataset_neighbors, alg_neighbors):
@@ -25,6 +26,24 @@ def recall(dataset_neighbors, alg_neighbors):
         recalls.append(len(np.intersect1d(dataset_indices,
                        alg_indices)) / len(dataset_indices))
     return np.array(recalls)
+
+
+def jaccard(dataset_neighbors, alg_neighbors):
+    jaccards = []
+    for i in range(len(dataset_neighbors)):
+        try:
+            num_dataset_indices = np.nonzero(dataset_neighbors[i] == -1)[0][0]
+            dataset_indices = dataset_neighbors[i][:num_dataset_indices]
+        except IndexError:
+            dataset_indices = dataset_neighbors[i]
+        try:
+            num_alg_indices = np.nonzero(alg_neighbors[i] == -1)[0][0]
+            alg_indices = alg_neighbors[i][:num_alg_indices]
+        except IndexError:
+            alg_indices = alg_neighbors[i]
+        jaccards.append(len(np.intersect1d(dataset_indices, alg_indices)) /
+                        len(np.union1d(dataset_indices, alg_indices)))
+    return np.array(jaccards)
 
 
 def approximation_ratio(data, step, dataset_max_distances, alg_neighbors):
@@ -75,6 +94,7 @@ if __name__ == "__main__":
             'query_time',
             'total_time',
             'recall',
+            'jaccard',
             'ratio'
         ],
         help='Plot only the result from each algorithm with the best average value (over all query) in this metric')
@@ -124,8 +144,9 @@ if __name__ == "__main__":
         np.where(dataset_distances < float('inf'), dataset_distances, -np.inf),
         axis=1)
 
-    fig, axs = plt.subplots(5, 1, figsize=(5, 25))
+    fig, axs = plt.subplots(3, 2, figsize=(10, 15))
     alg_metrics = {}
+    all_alg_metrics = {}
     if args.best_metric:
         average_alg_metrics = {metric: {} for metric in args.best_metric}
     for alg, result_files in results.items():
@@ -148,6 +169,9 @@ if __name__ == "__main__":
                     # Negate recall so lower is better
                     alg_metrics['recall'] = -recall(
                         dataset_neighbors, f['neighbors'])
+                    # Negate jaccard so lower is better
+                    alg_metrics['jaccard'] = -jaccard(
+                        dataset_neighbors, f['neighbors'])
                     # Negate approximation ratio so lower is better
                     alg_metrics['ratio'] = -approximation_ratio(
                         data, dataset.attrs['step'], dataset_max_distances,
@@ -168,42 +192,44 @@ if __name__ == "__main__":
                                 average_alg_metrics[metric][alg]['metrics'] =\
                                     copy.deepcopy(alg_metrics)
                     else:
-                        axs[0].plot(
-                            plot_mod(alg_metrics['build_time']), label=alg_label)
-                        axs[1].plot(plot_mod(alg_metrics['search_time']),
-                                    label=alg_label)
-                        axs[2].plot(plot_mod(alg_metrics['total_time']),
-                                    label=alg_label)
-                        # Make sure to un-negate recall
-                        axs[3].plot(
-                            plot_mod(-alg_metrics['recall']), label=alg_label)
-                        # Make sure to un-negate approximation ratios
-                        axs[4].plot(
-                            plot_mod(-alg_metrics['ratio']), label=alg_label)
+                        all_alg_metrics[alg_label] = copy.deepcopy(alg_metrics)
             except OSError as error:
                 raise OSError('Check owner of result files.')
     if args.best_metric:
         for metric, average_alg_metric in average_alg_metrics.items():
-            for arg_data in average_alg_metric.values():
-                alg_metrics = arg_data['metrics']
-                alg_label = f"{arg_data['label']}, (best {metric})"
-                axs[0].plot(plot_mod(alg_metrics['build_time']),
-                            label=alg_label)
-                axs[1].plot(plot_mod(alg_metrics['search_time']),
-                            label=alg_label)
-                axs[2].plot(plot_mod(alg_metrics['total_time']),
-                            label=alg_label)
-                # Make sure to un-negate recall
-                axs[3].plot(plot_mod(-alg_metrics['recall']), label=alg_label)
-                # Make sure to un-negate approximation ratios
-                axs[4].plot(plot_mod(-alg_metrics['ratio']), label=alg_label)
-
-    axs[0].set_ylabel('Time to build index (sec)')
-    axs[1].set_ylabel('Time to search (sec)')
-    axs[2].set_ylabel('Total time (sec)')
-    axs[3].set_ylabel('Recall')
-    axs[4].set_ylabel('Approximation ratio')
-    for ax in axs:
-        ax.set_xlabel('Iteration Number')
-        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 9})
+            for alg_data in average_alg_metric.values():
+                alg_label = f"{alg_data['label']}, (best {metric})"
+                all_alg_metrics[alg_label] = alg_data['metrics']
+    linestyles = create_linestyles(all_alg_metrics.keys())
+    for alg_label, alg_metrics in all_alg_metrics.items():
+        color, faded, linestyle, marker = linestyles[alg_label]
+        axs[0, 0].plot(plot_mod(alg_metrics['build_time']),
+                       label=alg_label, color=color, linestyle=linestyle,
+                       marker=marker, markevery=0.25, ms=7, lw=3, mew=2)
+        axs[0, 1].plot(plot_mod(alg_metrics['search_time']),
+                       color=color, linestyle=linestyle, marker=marker,
+                       markevery=0.25, ms=7, lw=3, mew=2)
+        axs[1, 0].plot(plot_mod(alg_metrics['total_time']),
+                       color=color, linestyle=linestyle, marker=marker,
+                       markevery=0.25, ms=7, lw=3, mew=2)
+        # Make sure to un-negate recall
+        axs[1, 1].plot(plot_mod(-alg_metrics['recall']),
+                       color=color, linestyle=linestyle, marker=marker,
+                       markevery=0.25, ms=7, lw=3, mew=2)
+        # Make sure to un-negate approximation ratios
+        axs[2, 0].plot(plot_mod(-alg_metrics['ratio']),
+                       color=color, linestyle=linestyle, marker=marker,
+                       markevery=0.25, ms=7, lw=3, mew=2)
+    axs[0, 0].set_ylabel('Time to build index (sec)')
+    axs[0, 1].set_ylabel('Time to search (sec)')
+    axs[1, 0].set_ylabel('Total time (sec)')
+    axs[1, 1].set_ylabel('Recall')
+    axs[2, 0].set_ylabel('Approximation ratio')
+    for ax_row in axs:
+        for ax in ax_row:
+            ax.set_xlabel('Iteration Number')
+            # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),
+            #           prop={'size': 9})
+    axs[2, 1].axis('off')
+    fig.legend(loc='upper left', bbox_to_anchor=(0.5, 0.27), prop={'size': 10})
     fig.savefig(args.output, bbox_inches='tight')

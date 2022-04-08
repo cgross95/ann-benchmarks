@@ -30,7 +30,8 @@ class DCIKNN(BaseANN):
     def fit(self, X):
         if self._fitted:
             self._dci_db.clear()
-        self._dci_db.add(np.copy(X), num_levels=self._num_levels,
+        data = np.copy(X)
+        self._dci_db.add(np.array(data, dtype=np.float64), num_levels=self._num_levels,
                          field_of_view=self._construction_field_of_view,
                          prop_to_retrieve=self._construction_prop_to_retrieve)
         self._fitted = True

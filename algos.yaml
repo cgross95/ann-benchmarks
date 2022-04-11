@@ -151,7 +151,7 @@ float:
      base-args: ["@metric"]
      run-groups:
        flann:
-         args: [[0.2, 0.5, 0.7, 0.8, 0.9, 0.95, 0.97]]
+         args: [['kdtree', 'kmeans', 'composite'], [0.2, 0.5, 0.7, 0.8, 0.9, 0.95, 0.97]]
     annoy:
       docker-tag: ann-benchmarks-annoy
       module: ann_benchmarks.algorithms.annoy
@@ -679,16 +679,16 @@ float:
       run-groups:
         dciknn:
             args: [
-              # [2, 3],
-              # [7, 10],
-              # [2, 3],
-              # [10],
-              # [0.002]
-              [2],
-              [7],
-              [3],
+              [2, 3],
+              [7, 10],
+              [2, 3],
               [10],
               [0.002]
+              # [2],
+              # [7],
+              # [3],
+              # [10],
+              # [0.002]
             ]
             query-args: [
               [100],
@@ -702,7 +702,7 @@ float:
       run-groups:
         pydci:
             args: [
-              [5],
+              [10],
               [2]
             ]
             query-args: [

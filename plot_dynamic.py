@@ -8,6 +8,16 @@ import argparse
 import h5py
 from ann_benchmarks.datasets import get_dataset
 from ann_benchmarks.plotting.utils import create_linestyles
+import pandas as pd
+
+metric_dict = {
+    'build_time': 'build time',
+    'search_time': 'search time',
+    'total_time': 'total time',
+    'recall': 'recall',
+    'jaccard': 'Jaccard index',
+    'ratio': 'approx. ratio'
+}
 
 
 def recall(dataset_neighbors, alg_neighbors):
@@ -67,11 +77,26 @@ def approximation_ratio(data, step, dataset_max_distances, alg_neighbors):
     return np.array(ratios)
 
 
-def moving_average(a, n=100):
-    # From https://stackoverflow.com/questions/14313510/how-to-calculate-rolling-moving-average-using-python-numpy-scipy
-    ret = np.cumsum(a, dtype=float)
-    ret[n:] = ret[n:] - ret[:-n]
-    return ret[n - 1:] / n
+def rolling_average(t, n=100):
+    df = pd.Series(t)
+    return df.rolling(n)
+
+
+def plot_data(ax, data, linestyle_info, alg_label, smooth, intervals):
+    color, faded, linestyle, marker = linestyle_info
+    if smooth:
+        rolling = rolling_average(data)
+        plot_data = rolling.mean().dropna()
+    else:
+        plot_data = data
+    ax.plot(plot_data, label=alg_label, color=color,
+            linestyle=linestyle, marker=marker, markevery=0.25, ms=7, lw=3,
+            mew=2)
+    if smooth and intervals:
+        deviation = rolling.std().dropna()
+        low = (plot_data - 2 * deviation)
+        up = (plot_data + 2 * deviation)
+        ax.fill_between(deviation.index, low, up, color=faded)
 
 
 if __name__ == "__main__":
@@ -89,19 +114,27 @@ if __name__ == "__main__":
     parser.add_argument(
         '--best_metric',
         nargs='+',
-        choices=[
-            'build_time',
-            'query_time',
-            'total_time',
-            'recall',
-            'jaccard',
-            'ratio'
-        ],
+        choices=metric_dict.keys(),
         help='Plot only the result from each algorithm with the best average value (over all query) in this metric')
     parser.add_argument(
         '--smooth',
         action='store_true',
         help='Smooth out all plots by taking rolling average'
+    )
+    parser.add_argument(
+        '--intervals',
+        action='store_true',
+        help='Plot intervals if smoothing method supports it'
+    )
+    parser.add_argument(
+        '--show_args',
+        action='store_true',
+        help='Show arguments of method found in each best metric'
+    )
+    parser.add_argument(
+        '--landscape',
+        action='store_true',
+        help='Lay out subplots in lanscape'
     )
     parser.add_argument(
         '-o', '--output')
@@ -112,12 +145,6 @@ if __name__ == "__main__":
         args.best_metric = list(set(args.best_metric))
         args.best_metric.sort()
 
-    def plot_mod(t):
-        if args.smooth:
-            return moving_average(t)
-        else:
-            return t
-
     if not args.output:
         if not os.path.isdir('results/dynamic'):
             os.mkdir('results/dynamic')
@@ -125,6 +152,12 @@ if __name__ == "__main__":
                                                  '_'.join(args.algorithms))
         if args.best_metric:
             args.output += '_' + '_'.join(args.best_metric)
+        if args.smooth:
+            args.output += '_' + 'smooth'
+        if args.intervals:
+            args.output += '_' + 'intervals'
+        if args.landscape:
+            args.output += '_' + 'landscape'
         args.output += '.png'
     results = {}
     for alg in args.algorithms:
@@ -144,7 +177,11 @@ if __name__ == "__main__":
         np.where(dataset_distances < float('inf'), dataset_distances, -np.inf),
         axis=1)
 
-    fig, axs = plt.subplots(3, 2, figsize=(10, 15))
+    if args.landscape:
+        fig, axs = plt.subplots(2, 3, figsize=(19, 10))
+    else:
+        fig, axs = plt.subplots(3, 2, figsize=(12, 15))
+    axs = axs.flatten()
     alg_metrics = {}
     all_alg_metrics = {}
     if args.best_metric:
@@ -155,6 +192,7 @@ if __name__ == "__main__":
                 average_alg_metric[alg] = {
                     'average': np.inf,  # Assumes lower is better
                     'label': None,
+                    'alg': alg,
                     'metrics': None
                 }
         for result_file in result_files:
@@ -198,38 +236,45 @@ if __name__ == "__main__":
     if args.best_metric:
         for metric, average_alg_metric in average_alg_metrics.items():
             for alg_data in average_alg_metric.values():
-                alg_label = f"{alg_data['label']}, (best {metric})"
+                if args.show_args:
+                    alg_label =\
+                        f"{alg_data['label']}, best {metric_dict[metric]}"
+                else:
+                    alg_label =\
+                        f"{alg_data['alg']}, best {metric_dict[metric]}"
                 all_alg_metrics[alg_label] = alg_data['metrics']
     linestyles = create_linestyles(all_alg_metrics.keys())
     for alg_label, alg_metrics in all_alg_metrics.items():
-        color, faded, linestyle, marker = linestyles[alg_label]
-        axs[0, 0].plot(plot_mod(alg_metrics['build_time']),
-                       label=alg_label, color=color, linestyle=linestyle,
-                       marker=marker, markevery=0.25, ms=7, lw=3, mew=2)
-        axs[0, 1].plot(plot_mod(alg_metrics['search_time']),
-                       color=color, linestyle=linestyle, marker=marker,
-                       markevery=0.25, ms=7, lw=3, mew=2)
-        axs[1, 0].plot(plot_mod(alg_metrics['total_time']),
-                       color=color, linestyle=linestyle, marker=marker,
-                       markevery=0.25, ms=7, lw=3, mew=2)
-        # Make sure to un-negate recall
-        axs[1, 1].plot(plot_mod(-alg_metrics['recall']),
-                       color=color, linestyle=linestyle, marker=marker,
-                       markevery=0.25, ms=7, lw=3, mew=2)
-        # Make sure to un-negate approximation ratios
-        axs[2, 0].plot(plot_mod(-alg_metrics['ratio']),
-                       color=color, linestyle=linestyle, marker=marker,
-                       markevery=0.25, ms=7, lw=3, mew=2)
-    axs[0, 0].set_ylabel('Time to build index (sec)')
-    axs[0, 1].set_ylabel('Time to search (sec)')
-    axs[1, 0].set_ylabel('Total time (sec)')
-    axs[1, 1].set_ylabel('Recall')
-    axs[2, 0].set_ylabel('Approximation ratio')
-    for ax_row in axs:
-        for ax in ax_row:
-            ax.set_xlabel('Iteration Number')
-            # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),
-            #           prop={'size': 9})
-    axs[2, 1].axis('off')
-    fig.legend(loc='upper left', bbox_to_anchor=(0.5, 0.27), prop={'size': 10})
+        plot_data(axs[0], alg_metrics['build_time'],
+                  linestyles[alg_label], alg_label, args.smooth,
+                  args.intervals)
+        plot_data(axs[1], alg_metrics['search_time'],
+                  linestyles[alg_label], None, args.smooth,
+                  args.intervals)
+        plot_data(axs[2], alg_metrics['total_time'],
+                  linestyles[alg_label], None, args.smooth,
+                  args.intervals)
+        plot_data(axs[3], -alg_metrics['recall'],
+                  linestyles[alg_label], None, args.smooth,
+                  args.intervals)
+        plot_data(axs[4], -alg_metrics['ratio'],
+                  linestyles[alg_label], None, args.smooth,
+                  args.intervals)
+    axs[0].set_ylabel('Time to build index (sec)')
+    axs[1].set_ylabel('Time to search (sec)')
+    axs[2].set_ylabel('Total time (sec)')
+    axs[3].set_ylabel('Recall')
+    axs[4].set_ylabel('Approximation ratio')
+    for ax in axs:
+        # for ax in ax_row:
+        ax.set_xlabel('Iteration Number')
+        # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),
+        #           prop={'size': 9})
+    axs[5].axis('off')
+    if args.landscape:
+        fig.legend(loc='upper left', bbox_to_anchor=(0.56, 0.41),
+                   prop={'size': 10})
+    else:
+        fig.legend(loc='upper left', bbox_to_anchor=(0.5, 0.27),
+                   prop={'size': 10})
     fig.savefig(args.output, bbox_inches='tight')

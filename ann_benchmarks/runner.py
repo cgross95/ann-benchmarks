@@ -44,7 +44,6 @@ def run_individual_query_dynamic(algo, X_train, step, radius, distance,
         build_time = time.time() - t0
         index_size = algo.get_memory_usage() - memory_usage_before
         v = X_train[j]
-        print(f'Processing query {j} on model that built in {build_time}')
         count = int(radius * j)
         if query_arguments:
             algo.set_query_arguments(*query_arguments)
@@ -61,7 +60,8 @@ def run_individual_query_dynamic(algo, X_train, step, radius, distance,
         candidates = [(int(idx), float(metrics[distance]['distance'](v, X_train[int(idx)])))  # noqa
                       for idx in candidates]
         n_items_processed[0] += 1
-        if n_items_processed[0] % 1000 == 0:
+        if n_items_processed[0] % 100 == 0:
+            print(f'Processing query {j} on model that built in {build_time}')
             print('Processed %d/%d queries...'
                   % (n_items_processed[0], num_test))
         if len(candidates) > count:
@@ -69,7 +69,12 @@ def run_individual_query_dynamic(algo, X_train, step, radius, distance,
                   ' is only %d)' % (algo, len(candidates), count))
         return (build_time, index_size, total, candidates)
 
-    results = [single_query(j) for j in range(step, len(X_train), step)]
+    results = numpy.zeros((run_count, num_test))
+    for i in range(run_count):
+        print('Run %d/%d...' % (i + 1, run_count))
+        for (j, query) in enumerate(range(step, len(X_train), step)):
+            results[i, j] = single_query(query)
+    average_results = numpy.mean(results, axis=0)
 
     verbose = hasattr(algo, "query_verbose")
     attrs = {
@@ -81,7 +86,7 @@ def run_individual_query_dynamic(algo, X_train, step, radius, distance,
     additional = algo.get_additional()
     for k in additional:
         attrs[k] = additional[k]
-    return (attrs, results)
+    return (attrs, average_results)
 
 
 def run_individual_query(algo, X_train, X_test, distance, count, run_count,

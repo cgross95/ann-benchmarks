@@ -204,6 +204,8 @@ if __name__ == "__main__":
                     alg_metrics['search_time'] = np.array(f['search_times'])
                     alg_metrics['total_time'] = alg_metrics['build_time'] + \
                         alg_metrics['search_time']
+                    alg_metrics['elapsed'] = np.sum(alg_metrics['total_time'])
+                    print(np.sum(alg_metrics['elapsed']))
                     # Negate recall so lower is better
                     alg_metrics['recall'] = -recall(
                         dataset_neighbors, f['neighbors'])
@@ -238,7 +240,7 @@ if __name__ == "__main__":
             for alg_data in average_alg_metric.values():
                 if args.show_args:
                     alg_label =\
-                        f"{alg_data['label']}, best {metric_dict[metric]}"
+                        f"{alg_data['label']}, best {metric_dict[metric]}, elapsed time = {alg_data['metrics']['elapsed']}"
                 else:
                     alg_label =\
                         f"{alg_data['alg']}, best {metric_dict[metric]}"

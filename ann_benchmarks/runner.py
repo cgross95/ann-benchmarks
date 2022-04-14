@@ -19,16 +19,10 @@ from ann_benchmarks.results import store_results, store_results_dynamic
 
 
 def run_individual_query_dynamic(algo, X_train, step, radius, distance,
-                                 run_count, query_arguments):
+                                 run_num, run_count, query_arguments):
     prepared_queries = hasattr(algo, "prepare_query")
 
     num_test = (len(X_train) // step) - 1
-    if run_count > 1:
-        print('NOTE: Running multiple times is currently disabled for dynamic datasets. Continuing with only one run.')
-
-    # for i in range(run_count):
-    #    print('Run %d/%d...' % (i + 1, run_count))
-    # a bit dumb but can't be a scalar since of Python's scoping rules
 
     n_items_processed = [0]
 
@@ -61,32 +55,28 @@ def run_individual_query_dynamic(algo, X_train, step, radius, distance,
                       for idx in candidates]
         n_items_processed[0] += 1
         if n_items_processed[0] % 100 == 0:
-            print(f'Processing query {j} on model that built in {build_time}')
             print('Processed %d/%d queries...'
                   % (n_items_processed[0], num_test))
+            print(f'Processing query {j} on model that built in {build_time}')
         if len(candidates) > count:
             print('warning: algorithm %s returned %d results, but count'
                   ' is only %d)' % (algo, len(candidates), count))
         return (build_time, index_size, total, candidates)
 
-    results = numpy.zeros((run_count, num_test))
-    for i in range(run_count):
-        print('Run %d/%d...' % (i + 1, run_count))
-        for (j, query) in enumerate(range(step, len(X_train), step)):
-            results[i, j] = single_query(query)
-    average_results = numpy.mean(results, axis=0)
+    results = [single_query(j) for j in range(step, len(X_train), step)]
 
     verbose = hasattr(algo, "query_verbose")
     attrs = {
         "expect_extra": verbose,
         "name": str(algo),
+        "run_num": run_num,
         "run_count": run_count,
         "distance": distance,
     }
     additional = algo.get_additional()
     for k in additional:
         attrs[k] = additional[k]
-    return (attrs, average_results)
+    return (attrs, results)
 
 
 def run_individual_query(algo, X_train, X_test, distance, count, run_count,
@@ -198,13 +188,15 @@ function""" % (definition.module, definition.constructor, definition.arguments)
         for pos, query_arguments in enumerate(query_argument_groups, 1):
             print("Running query argument group %d of %d..." %
                   (pos, len(query_argument_groups)))
-            descriptor, results = run_individual_query_dynamic(
-                algo, X_train, step, radius, distance, run_count,
-                query_arguments)
-            descriptor["algo"] = definition.algorithm
-            descriptor["dataset"] = dataset
-            store_results_dynamic(dataset, max_count, definition,
-                                  query_arguments, descriptor, results)
+            for i in range(run_count):
+                print('Run %d/%d...' % (i + 1, run_count))
+                descriptor, results = run_individual_query_dynamic(
+                    algo, X_train, step, radius, distance, i, run_count,
+                    query_arguments)
+                descriptor["algo"] = definition.algorithm
+                descriptor["dataset"] = dataset
+                store_results_dynamic(dataset, max_count, definition,
+                                      query_arguments, descriptor, results)
     finally:
         algo.done()
 

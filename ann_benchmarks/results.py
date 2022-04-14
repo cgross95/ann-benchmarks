@@ -8,7 +8,8 @@ import traceback
 
 
 def get_result_filename(dataset=None, count=None, definition=None,
-                        query_arguments=None, batch_mode=False):
+                        query_arguments=None, batch_mode=False,
+                        run_num=False, run_count=False):
     d = ['results']
     if dataset:
         d.append(dataset)
@@ -18,14 +19,18 @@ def get_result_filename(dataset=None, count=None, definition=None,
         d.append(definition.algorithm + ('-batch' if batch_mode else ''))
         data = definition.arguments + query_arguments
         d.append(re.sub(r'\W+', '_', json.dumps(data, sort_keys=True))
-                 .strip('_') + ".hdf5")
+                 .strip('_'))
+        if str(count) == 'dynamic' and run_num:
+            d.append(f'_run_{run_num}_{run_count}')
+        d.append('.hdf5')
     return os.path.join(*d)
 
 
 def store_results_dynamic(dataset, max_count, definition, query_arguments,
                           attrs, results):
     fn = get_result_filename(
-        dataset, 'dynamic', definition, query_arguments, False)
+        dataset, 'dynamic', definition, query_arguments, False,
+        attrs['run_count'], attrs['run_count'])
     head, tail = os.path.split(fn)
     if not os.path.isdir(head):
         os.makedirs(head)

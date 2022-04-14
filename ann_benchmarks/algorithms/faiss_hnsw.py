@@ -25,6 +25,11 @@ class FaissHNSW(Faiss):
         self.index.add(X)
         faiss.omp_set_num_threads(1)
 
+    def update(self, X):
+        if X.dtype != np.float32:
+            X = X.astype(np.float32)
+        self.index.add(X)
+
     def set_query_arguments(self, ef):
         faiss.cvar.hnsw_stats.reset()
         self.index.hnsw.efSearch = ef

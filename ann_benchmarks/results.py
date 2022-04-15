@@ -5,6 +5,7 @@ import json
 import os
 import re
 import traceback
+import numpy
 
 
 def get_result_filename(dataset=None, count=None, definition=None,
@@ -18,19 +19,51 @@ def get_result_filename(dataset=None, count=None, definition=None,
     if definition:
         d.append(definition.algorithm + ('-batch' if batch_mode else ''))
         data = definition.arguments + query_arguments
-        d.append(re.sub(r'\W+', '_', json.dumps(data, sort_keys=True))
-                 .strip('_'))
-        if str(count) == 'dynamic' and run_num:
-            d.append(f'_run_{run_num}_{run_count}')
-        d.append('.hdf5')
+        if str(count) == 'dynamic' and run_count:
+            d.append(re.sub(r'\W+', '_', json.dumps(data, sort_keys=True))
+                     .strip('_'))
+            d.append(f'run_{run_num}_{run_count}.hdf5')
+        else:
+            d.append(re.sub(r'\W+', '_', json.dumps(data, sort_keys=True))
+                     .strip('_') + ".hd5")
     return os.path.join(*d)
+
+
+def get_best_metric_filename(dataset, alg, metric):
+    d = ['results', dataset, 'dynamic', alg, f'best_{metric}.hd5']
+    return os.path.join(*d)
+
+
+def store_best_metric(dataset, alg, best_metric_name, best_alg_metrics, all_save_metrics):
+    fn = get_best_metric_filename(dataset, alg, best_metric_name)
+    f = h5py.File(fn, 'w')
+    f.attrs['average'] = best_alg_metrics['average']
+    f.attrs['label'] = best_alg_metrics['label']
+    for metric in all_save_metrics:
+        means = f.create_dataset(
+            f'{metric}_means', (len(best_alg_metrics['metrics_means'][metric]),), 'f')
+        stds = f.create_dataset(
+            f'{metric}_stds', (len(best_alg_metrics['metrics_means'][metric]),), 'f')
+        metrics = zip(best_alg_metrics['metrics_means'][metric],
+                      best_alg_metrics['metrics_stds'][metric])
+        for i, (mean, std) in enumerate(metrics):
+            means[i] = mean
+            stds[i] = std
+    f.close()
+
+
+def get_metrics(f, metrics, stat):
+    loaded_metrics = {}
+    for metric in metrics:
+        loaded_metrics[metric] = numpy.array(f[f'{metric}_{stat}'])
+    return loaded_metrics
 
 
 def store_results_dynamic(dataset, max_count, definition, query_arguments,
                           attrs, results):
     fn = get_result_filename(
         dataset, 'dynamic', definition, query_arguments, False,
-        attrs['run_count'], attrs['run_count'])
+        attrs['run_num'], attrs['run_count'])
     head, tail = os.path.split(fn)
     if not os.path.isdir(head):
         os.makedirs(head)

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import h5py
+from ann_benchmarks.results import get_best_metric_filename, store_best_metric, get_metrics
 from ann_benchmarks.datasets import get_dataset
 from ann_benchmarks.plotting.utils import create_linestyles
 import pandas as pd
@@ -14,6 +15,7 @@ metric_dict = {
     'build_time': 'build time',
     'search_time': 'search time',
     'total_time': 'total time',
+    'elapsed': 'elapsed time',
     'recall': 'recall',
     'jaccard': 'Jaccard index',
     'ratio': 'approx. ratio'
@@ -82,21 +84,29 @@ def rolling_average(t, n=100):
     return df.rolling(n)
 
 
-def plot_data(ax, data, linestyle_info, alg_label, smooth, intervals):
+def plot_data(ax, mean, std, flip, linestyle_info, alg_label, smooth,
+              intervals):
     color, faded, linestyle, marker = linestyle_info
     if smooth:
-        rolling = rolling_average(data)
+        rolling = rolling_average(mean, int(smooth))
         plot_data = rolling.mean().dropna()
+        plot_std = pd.Series(std[int(smooth) - 1:], index=plot_data.index)
     else:
-        plot_data = data
+        plot_data = pd.Series(mean)
+        plot_std = pd.Series(std)
+    if flip:
+        plot_data = -plot_data
     ax.plot(plot_data, label=alg_label, color=color,
             linestyle=linestyle, marker=marker, markevery=0.25, ms=7, lw=3,
             mew=2)
-    if smooth and intervals:
-        deviation = rolling.std().dropna()
-        low = (plot_data - 2 * deviation)
-        up = (plot_data + 2 * deviation)
-        ax.fill_between(deviation.index, low, up, color=faded)
+    low = plot_data - 2 * plot_std
+    up = plot_data + 2 * plot_std
+    ax.fill_between(plot_data.index, low, up, color=faded)
+    # if smooth and intervals:
+    #     deviation = rolling.std().dropna()
+    #     low = (plot_data - 2 * deviation)
+    #     up = (plot_data + 2 * deviation)
+    #     ax.fill_between(deviation.index, low, up, color=faded)
 
 
 if __name__ == "__main__":
@@ -118,8 +128,10 @@ if __name__ == "__main__":
         help='Plot only the result from each algorithm with the best average value (over all query) in this metric')
     parser.add_argument(
         '--smooth',
-        action='store_true',
-        help='Smooth out all plots by taking rolling average'
+        metavar='N',
+        default=None,
+        # action='store_true',
+        help='Smooth out all plots by taking rolling average of length N'
     )
     parser.add_argument(
         '--intervals',
@@ -135,6 +147,11 @@ if __name__ == "__main__":
         '--landscape',
         action='store_true',
         help='Lay out subplots in lanscape'
+    )
+    parser.add_argument(
+        '--force',
+        action='store_true',
+        help='Recompute best metric cache'
     )
     parser.add_argument(
         '-o', '--output')
@@ -182,86 +199,129 @@ if __name__ == "__main__":
     else:
         fig, axs = plt.subplots(3, 2, figsize=(12, 15))
     axs = axs.flatten()
-    alg_metrics = {}
-    all_alg_metrics = {}
+    alg_metrics_means = {}
+    alg_metrics_stds = {}
+    all_alg_metrics_means = {}
+    all_alg_metrics_stds = {}
     if args.best_metric:
         average_alg_metrics = {metric: {} for metric in args.best_metric}
-    for alg, result_files in results.items():
+        non_cached_metrics = {alg: [] for alg in results.keys()}
+    for alg, result_dirs in results.items():
         if args.best_metric:
-            for average_alg_metric in average_alg_metrics.values():
-                average_alg_metric[alg] = {
-                    'average': np.inf,  # Assumes lower is better
-                    'label': None,
-                    'alg': alg,
-                    'metrics': None
-                }
-        for result_file in result_files:
-            result_name, _ = os.path.splitext(os.path.basename(result_file))
+            for metric, average_alg_metric in average_alg_metrics.items():
+                best_metric_file = get_best_metric_filename(
+                    args.dataset, alg, metric)
+                if os.access(best_metric_file, os.R_OK) and not args.force:
+                    with h5py.File(best_metric_file, 'r+') as f:
+                        average_alg_metric[alg] = {
+                            'average': f.attrs['average'],
+                            'label': f.attrs['label'],
+                            'alg': alg,
+                            'metrics_means': get_metrics(f, metric_dict.keys(), 'means'),
+                            'metrics_stds': get_metrics(f, metric_dict.keys(), 'stds')
+                        }
+                else:
+                    average_alg_metric[alg] = {
+                        'average': np.inf,  # Assumes lower is better
+                        'label': None,
+                        'alg': alg,
+                        'metrics_means': None,
+                        'metrics_stds': None
+                    }
+                    non_cached_metrics[alg].append(metric)
+            if not non_cached_metrics[alg]:  # Can skip this algorithm
+                continue
+        for result_dir in result_dirs:
+            if not os.path.isdir(result_dir):
+                continue
+            result_name = os.path.basename(result_dir)
             alg_label = f'{alg}_{result_name}'
-            try:
-                with h5py.File(result_file, 'r+') as f:
-                    alg_metrics['build_time'] = np.array(f['build_times'])
-                    alg_metrics['search_time'] = np.array(f['search_times'])
-                    alg_metrics['total_time'] = alg_metrics['build_time'] + \
-                        alg_metrics['search_time']
-                    alg_metrics['elapsed'] = np.sum(alg_metrics['total_time'])
-                    print(np.sum(alg_metrics['elapsed']))
-                    # Negate recall so lower is better
-                    alg_metrics['recall'] = -recall(
-                        dataset_neighbors, f['neighbors'])
-                    # Negate jaccard so lower is better
-                    alg_metrics['jaccard'] = -jaccard(
-                        dataset_neighbors, f['neighbors'])
-                    # Negate approximation ratio so lower is better
-                    alg_metrics['ratio'] = -approximation_ratio(
-                        data, dataset.attrs['step'], dataset_max_distances,
-                        f['neighbors'])
-                    if args.best_metric:
-                        for metric in args.best_metric:
-                            # Average over last 10% of runs
-                            num_average = int(
-                                0.1 * len(alg_metrics['build_time']))
-                            average = np.mean(
-                                alg_metrics[metric][-num_average:])
-                            if (average_alg_metrics[metric][alg]['average']
-                                    > average):
-                                average_alg_metrics[metric][alg]['average'] =\
-                                    average
-                                average_alg_metrics[metric][alg]['label'] =\
-                                    alg_label
-                                average_alg_metrics[metric][alg]['metrics'] =\
-                                    copy.deepcopy(alg_metrics)
-                    else:
-                        all_alg_metrics[alg_label] = copy.deepcopy(alg_metrics)
-            except OSError as error:
-                raise OSError('Check owner of result files.')
+            runs = os.scandir(result_dir)
+            runs_metrics = []
+            for run_num, result_file in enumerate(runs):
+                run_metrics = {}
+                try:
+                    with h5py.File(result_file, 'r+') as f:
+                        run_metrics['build_time'] = np.array(
+                            f['build_times'])
+                        run_metrics['search_time'] = np.array(
+                            f['search_times'])
+                        run_metrics['total_time'] = run_metrics['build_time'] + \
+                            run_metrics['search_time']
+                        run_metrics['elapsed'] = np.sum(
+                            run_metrics['total_time'])
+                        # Negate recall so lower is better
+                        run_metrics['recall'] = -recall(
+                            dataset_neighbors, f['neighbors'])
+                        # Negate jaccard so lower is better
+                        run_metrics['jaccard'] = -jaccard(
+                            dataset_neighbors, f['neighbors'])
+                        # Negate approximation ratio so lower is better
+                        run_metrics['ratio'] = -approximation_ratio(
+                            data, dataset.attrs['step'], dataset_max_distances,
+                            f['neighbors'])
+                        runs_metrics.append(run_metrics)
+                except OSError as error:
+                    raise OSError('Check owner of result files.')
+            for metric in metric_dict.keys():
+                runs_df = pd.DataFrame([runs_metrics[i][metric]
+                                       for i in range(len(runs_metrics))])
+                alg_metrics_means[metric] = runs_df.mean(axis=0)
+                alg_metrics_stds[metric] = runs_df.std(axis=0)
+            if args.best_metric:
+                for metric in non_cached_metrics[alg]:
+                    # print(alg_metrics_means)
+                    # print(alg_metrics_means[metric])
+                    # Average over last 10% of runs
+                    num_average = int(
+                        0.1 * len(alg_metrics_means['build_time']))
+                    average = np.mean(
+                        alg_metrics_means[metric][-num_average:])
+                    if (average_alg_metrics[metric][alg]['average']
+                            > average):
+                        average_alg_metrics[metric][alg]['average'] =\
+                            average
+                        average_alg_metrics[metric][alg]['label'] =\
+                            alg_label
+                        average_alg_metrics[metric][alg]['metrics_means'] =\
+                            copy.deepcopy(alg_metrics_means)
+                        average_alg_metrics[metric][alg]['metrics_stds'] =\
+                            copy.deepcopy(alg_metrics_stds)
+            else:
+                all_alg_metrics_means[alg_label] = copy.deepcopy(
+                    alg_metrics_means)
+                all_alg_metrics_stds[alg_label] = copy.deepcopy(
+                    alg_metrics_stds)
     if args.best_metric:
+        # Cache new metrics
+        for alg, metrics in non_cached_metrics.items():
+            for metric in metrics:
+                store_best_metric(args.dataset, alg, metric,
+                                  average_alg_metrics[metric][alg],
+                                  metric_dict.keys())
         for metric, average_alg_metric in average_alg_metrics.items():
             for alg_data in average_alg_metric.values():
                 if args.show_args:
                     alg_label =\
-                        f"{alg_data['label']}, best {metric_dict[metric]}, elapsed time = {alg_data['metrics']['elapsed']}"
+                        f"{alg_data['label']}, best {metric_dict[metric]}, elapsed time = {alg_data['metrics_means']['elapsed'][0]:.3f} sec"
                 else:
                     alg_label =\
                         f"{alg_data['alg']}, best {metric_dict[metric]}"
-                all_alg_metrics[alg_label] = alg_data['metrics']
-    linestyles = create_linestyles(all_alg_metrics.keys())
-    for alg_label, alg_metrics in all_alg_metrics.items():
-        plot_data(axs[0], alg_metrics['build_time'],
-                  linestyles[alg_label], alg_label, args.smooth,
-                  args.intervals)
-        plot_data(axs[1], alg_metrics['search_time'],
-                  linestyles[alg_label], None, args.smooth,
-                  args.intervals)
-        plot_data(axs[2], alg_metrics['total_time'],
-                  linestyles[alg_label], None, args.smooth,
-                  args.intervals)
-        plot_data(axs[3], -alg_metrics['recall'],
-                  linestyles[alg_label], None, args.smooth,
-                  args.intervals)
-        plot_data(axs[4], -alg_metrics['ratio'],
-                  linestyles[alg_label], None, args.smooth,
-                  args.intervals)
+                all_alg_metrics_means[alg_label] = alg_data['metrics_means']
+                all_alg_metrics_stds[alg_label] = alg_data['metrics_stds']
+    linestyles = create_linestyles(all_alg_metrics_means.keys())
+    for alg_label in all_alg_metrics_means.keys():
+        plot_metrics = [('build_time', False),
+                        ('search_time', False),
+                        ('total_time', False),
+                        ('recall', True),
+                        ('ratio', True)]
+        for i, (metric, flip) in enumerate(plot_metrics):
+            label = alg_label if i == 0 else None
+            plot_data(axs[i], all_alg_metrics_means[alg_label][metric],
+                      all_alg_metrics_stds[alg_label][metric], flip,
+                      linestyles[alg_label], label, args.smooth,
+                      args.intervals)
     axs[0].set_ylabel('Time to build index (sec)')
     axs[1].set_ylabel('Time to search (sec)')
     axs[2].set_ylabel('Total time (sec)')

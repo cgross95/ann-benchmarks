@@ -191,7 +191,7 @@ function""" % (definition.module, definition.constructor, definition.arguments)
             for i in range(run_count):
                 print('Run %d/%d...' % (i + 1, run_count))
                 descriptor, results = run_individual_query_dynamic(
-                    algo, X_train, step, radius, distance, i, run_count,
+                    algo, X_train, step, radius, distance, i + 1, run_count,
                     query_arguments)
                 descriptor["algo"] = definition.algorithm
                 descriptor["dataset"] = dataset

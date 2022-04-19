@@ -20,11 +20,11 @@ def get_result_filename(dataset=None, count=None, definition=None,
         d.append(definition.algorithm + ('-batch' if batch_mode else ''))
         data = definition.arguments + query_arguments
         if str(count) == 'dynamic' and run_count:
-            d.append(re.sub(r'\W+', '_', json.dumps(data, sort_keys=True))
+            d.append(re.sub(r'([^\w\-])+', '_', json.dumps(data, sort_keys=True))
                      .strip('_'))
             d.append(f'run_{run_num}_{run_count}.hdf5')
         else:
-            d.append(re.sub(r'\W+', '_', json.dumps(data, sort_keys=True))
+            d.append(re.sub(r'([^\w\-])+', '_', json.dumps(data, sort_keys=True))
                      .strip('_') + ".hd5")
     return os.path.join(*d)
 

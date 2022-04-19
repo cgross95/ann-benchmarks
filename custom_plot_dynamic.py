@@ -146,7 +146,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--landscape',
         action='store_true',
-        help='Lay out subplots in landscape'
+        help='Lay out subplots in lanscape'
     )
     parser.add_argument(
         '--force',
@@ -198,17 +198,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     args.algorithms.sort()
-    if args.best_metric:
-        args.best_metric = list(set(args.best_metric))
-        args.best_metric.sort()
 
     if not args.output:
         if not os.path.isdir('results/dynamic'):
             os.mkdir('results/dynamic')
         args.output = 'results/dynamic/%s_%s' % (args.dataset,
                                                  '_'.join(args.algorithms))
-        if args.best_metric:
-            args.output += '_' + '_'.join(args.best_metric)
         if args.smooth:
             args.output += '_' + 'smooth'
         if args.intervals:
@@ -217,13 +212,13 @@ if __name__ == "__main__":
             args.output += '_' + 'landscape'
         args.output += '.png'
     results = {}
-    for alg in args.algorithms:
-        results[alg] = []
-        alg_dir = f'results/{args.dataset}/dynamic/{alg}'
-        if not os.path.isdir(alg_dir):
+    for result_file in args.algorithms:
+        if not os.path.isdir(result_file):
             raise OSError(f'No results for algorithm {alg}')
-        for result_file in os.scandir(alg_dir):
-            results[alg].append(result_file)
+        alg = result_file.split(os.path.sep)[-2]
+        if alg not in results:
+            results[alg] = []
+        results[alg].append(result_file)
 
     # Load/cache dataset
     dataset, _, _ = get_dataset(args.dataset)
@@ -243,34 +238,7 @@ if __name__ == "__main__":
     alg_metrics_stds = {}
     all_alg_metrics_means = {}
     all_alg_metrics_stds = {}
-    if args.best_metric:
-        average_alg_metrics = {metric: {} for metric in args.best_metric}
-        non_cached_metrics = {alg: [] for alg in results.keys()}
     for alg, result_dirs in results.items():
-        if args.best_metric:
-            for metric, average_alg_metric in average_alg_metrics.items():
-                best_metric_file = get_best_metric_filename(
-                    args.dataset, alg, metric)
-                if os.access(best_metric_file, os.R_OK) and not args.force:
-                    with h5py.File(best_metric_file, 'r+') as f:
-                        average_alg_metric[alg] = {
-                            'average': f.attrs['average'],
-                            'label': f.attrs['label'],
-                            'alg': alg,
-                            'metrics_means': get_metrics(f, metric_dict.keys(), 'means'),
-                            'metrics_stds': get_metrics(f, metric_dict.keys(), 'stds')
-                        }
-                else:
-                    average_alg_metric[alg] = {
-                        'average': np.inf,  # Assumes lower is better
-                        'label': None,
-                        'alg': alg,
-                        'metrics_means': None,
-                        'metrics_stds': None
-                    }
-                    non_cached_metrics[alg].append(metric)
-            if not non_cached_metrics[alg]:  # Can skip this algorithm
-                continue
         for result_dir in result_dirs:
             if not os.path.isdir(result_dir):
                 continue
@@ -308,47 +276,8 @@ if __name__ == "__main__":
                                        for i in range(len(runs_metrics))])
                 alg_metrics_means[metric] = runs_df.mean(axis=0)
                 alg_metrics_stds[metric] = runs_df.std(axis=0)
-            if args.best_metric:
-                for metric in non_cached_metrics[alg]:
-                    # print(alg_metrics_means)
-                    # print(alg_metrics_means[metric])
-                    # Average over last 10% of runs
-                    num_average = int(
-                        0.1 * len(alg_metrics_means['build_time']))
-                    average = np.mean(
-                        alg_metrics_means[metric][-num_average:])
-                    if (average_alg_metrics[metric][alg]['average']
-                            > average):
-                        average_alg_metrics[metric][alg]['average'] =\
-                            average
-                        average_alg_metrics[metric][alg]['label'] =\
-                            alg_label
-                        average_alg_metrics[metric][alg]['metrics_means'] =\
-                            copy.deepcopy(alg_metrics_means)
-                        average_alg_metrics[metric][alg]['metrics_stds'] =\
-                            copy.deepcopy(alg_metrics_stds)
-            else:
-                all_alg_metrics_means[alg_label] = copy.deepcopy(
-                    alg_metrics_means)
-                all_alg_metrics_stds[alg_label] = copy.deepcopy(
-                    alg_metrics_stds)
-    if args.best_metric:
-        # Cache new metrics
-        for alg, metrics in non_cached_metrics.items():
-            for metric in metrics:
-                store_best_metric(args.dataset, alg, metric,
-                                  average_alg_metrics[metric][alg],
-                                  metric_dict.keys())
-        for metric, average_alg_metric in average_alg_metrics.items():
-            for alg_data in average_alg_metric.values():
-                if args.show_args:
-                    alg_label =\
-                        f"{alg_data['label']}, best {metric_dict[metric]}, elapsed time = {alg_data['metrics_means']['elapsed'][0]:.3f} sec"
-                else:
-                    alg_label =\
-                        f"{alg_data['alg']}, best {metric_dict[metric]}"
-                all_alg_metrics_means[alg_label] = alg_data['metrics_means']
-                all_alg_metrics_stds[alg_label] = alg_data['metrics_stds']
+            all_alg_metrics_means[alg_label] = copy.deepcopy(alg_metrics_means)
+            all_alg_metrics_stds[alg_label] = copy.deepcopy(alg_metrics_stds)
     linestyles = create_linestyles(all_alg_metrics_means.keys())
     for alg_label in all_alg_metrics_means.keys():
         plot_metrics = [('build_time', False),

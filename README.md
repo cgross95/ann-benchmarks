@@ -1,14 +1,16 @@
-Benchmarking nearest neighbors
-==============================
+Dynamic benchmarking nearest neighbors
+=====================================
 
-[![Build Status](https://img.shields.io/github/workflow/status/erikbern/ann-benchmarks/ANN%20benchmarks?style=flat-square)](https://github.com/erikbern/ann-benchmarks/actions?query=workflow:benchmarks)
+Note
+====
 
-Doing fast searching of nearest neighbors in high dimensional spaces is an increasingly important problem, but so far there has not been a lot of empirical attempts at comparing approaches in an objective way.
+This project is a fork of the original [ann-benchmarks](https://github.com/erikbern/ann-benchmarks) repository. We make significant use of their codebase and extend it to handle dynamically updating algorithms. Please see the original project for more information. Attempts have been made to keep the original functionality of the benchmarks accessible, but this project is mainly concerned with dynamically updating algorithms.
 
-This project contains some tools to benchmark various implementations of approximate nearest neighbor (ANN) search for different metrics. We have pregenerated datasets (in HDF5) formats and we also have Docker containers for each algorithm. There's a [test suite](https://travis-ci.org/erikbern/ann-benchmarks) that makes sure every algorithm works.
 
 Evaluated
 =========
+
+The following methods are those evaluated in the original project, with annotations concerning their support for dynamic updates. We have also added `dci-knn` and `pydci`.
 
 | Method | Dynamic updates? | Notes on dynamic updates |
 | :----- | :---------------------: | :----------------------- | 
@@ -43,57 +45,9 @@ Evaluated
 Data sets
 =========
 
-We have a number of precomputed data sets for this. All data sets are pre-split into train/test and come with ground truth data in the form of the top 100 neighbors. We store them in a HDF5 format:
+The datasets used for this project were provided to us by Siemens and is not included in this repository. Before running any tests on this data, please move the following files to the `data` directory: `AS.csv`, `OLHC.csv`, `SHERPA.csv`, `SHERPA_100000.csv`.
 
-| Dataset                                                           | Dimensions | Train size | Test size | Neighbors | Distance  | Download                                                                   |
-| ----------------------------------------------------------------- | ---------: | ---------: | --------: | --------: | --------- | -------------------------------------------------------------------------- |
-| [DEEP1B](http://sites.skoltech.ru/compvision/noimi/)              |         96 |  9,990,000 |    10,000 |       100 | Angular   | [HDF5](http://ann-benchmarks.com/deep-image-96-angular.hdf5) (3.6GB)
-| [Fashion-MNIST](https://github.com/zalandoresearch/fashion-mnist) |        784 |     60,000 |    10,000 |       100 | Euclidean | [HDF5](http://ann-benchmarks.com/fashion-mnist-784-euclidean.hdf5) (217MB) |
-| [GIST](http://corpus-texmex.irisa.fr/)                            |        960 |  1,000,000 |     1,000 |       100 | Euclidean | [HDF5](http://ann-benchmarks.com/gist-960-euclidean.hdf5) (3.6GB)          |
-| [GloVe](http://nlp.stanford.edu/projects/glove/)                  |         25 |  1,183,514 |    10,000 |       100 | Angular   | [HDF5](http://ann-benchmarks.com/glove-25-angular.hdf5) (121MB)            |
-| GloVe                                                             |         50 |  1,183,514 |    10,000 |       100 | Angular   | [HDF5](http://ann-benchmarks.com/glove-50-angular.hdf5) (235MB)            |
-| GloVe                                                             |        100 |  1,183,514 |    10,000 |       100 | Angular   | [HDF5](http://ann-benchmarks.com/glove-100-angular.hdf5) (463MB)           |
-| GloVe                                                             |        200 |  1,183,514 |    10,000 |       100 | Angular   | [HDF5](http://ann-benchmarks.com/glove-200-angular.hdf5) (918MB)           |
-| [Kosarak](http://fimi.uantwerpen.be/data/)                        |      27983 |     74,962 |       500 |       100 | Jaccard   | [HDF5](http://ann-benchmarks.com/kosarak-jaccard.hdf5) (2.0GB)             |
-| [MNIST](http://yann.lecun.com/exdb/mnist/)                        |        784 |     60,000 |    10,000 |       100 | Euclidean | [HDF5](http://ann-benchmarks.com/mnist-784-euclidean.hdf5) (217MB)         |
-| [NYTimes](https://archive.ics.uci.edu/ml/datasets/bag+of+words)   |        256 |    290,000 |    10,000 |       100 | Angular   | [HDF5](http://ann-benchmarks.com/nytimes-256-angular.hdf5) (301MB)         |
-| [SIFT](http://corpus-texmex.irisa.fr/)                           |        128 |  1,000,000 |    10,000 |       100 | Euclidean | [HDF5](http://ann-benchmarks.com/sift-128-euclidean.hdf5) (501MB)          |
-| [Last.fm](https://github.com/erikbern/ann-benchmarks/pull/91)     |         65 |    292,385 |    50,000 |       100 | Angular   | [HDF5](http://ann-benchmarks.com/lastfm-64-dot.hdf5) (135MB)               |
-
-Results
-=======
-
-Interactive plots can be found at <http://ann-benchmarks.com>. These are all as of December 2021, running all benchmarks on a r5.4xlarge machine on AWS with `--parallelism 7`:
-
-glove-100-angular
------------------
-
-![glove-100-angular](https://raw.github.com/erikbern/ann-benchmarks/master/results/glove-100-angular.png)
-
-sift-128-euclidean
-------------------
-
-![glove-100-angular](https://raw.github.com/erikbern/ann-benchmarks/master/results/sift-128-euclidean.png)
-
-fashion-mnist-784-euclidean
----------------------------
-
-![fashion-mnist-784-euclidean](https://raw.github.com/erikbern/ann-benchmarks/master/results/fashion-mnist-784-euclidean.png)
-
-lastfm-64-dot
-------------------
-
-![lastfm-64-dot](https://raw.github.com/erikbern/ann-benchmarks/master/results/lastfm-64-dot.png)
-
-nytimes-256-angular
--------------------
-
-![nytimes-256-angular](https://raw.github.com/erikbern/ann-benchmarks/master/results/nytimes-256-angular.png)
-
-glove-25-angular
-----------------
-
-![glove-25-angular](https://raw.github.com/erikbern/ann-benchmarks/master/results/glove-25-angular.png)
+Note that the data included with the original project should be able to be adapted for dynamic tests. See the function `ann-benchmarks.datasets.write_dynamic_output` for more information and `ann-benchmarks.datasets.siemens_dynamic` for an example.
 
 Install
 =======
@@ -107,14 +61,36 @@ The only prerequisite is Python (tested with 3.6) and Docker.
 Running
 =======
 
-1. Run `python run.py` (this can take an extremely long time, potentially days)
-2. Run `python plot.py` or `python create_website.py` to plot results.
+In order to replicate the results summarized in the report, try using the script `run_script.sh`. As currently setup, it will take a very long time to run, so running only one dataset or algorithm at a time may be preferable. This can be performed with the command
+```
+python run.py --dataset $DATASET --count -1 --runs 5 --algorithm $ALGORITHM
+```
 
-You can customize the algorithms and datasets if you want to:
+where `$DATASET` can be any of
+- `siemens-sherpa`
+- `siemens-big-sherpa`
+- `siemens-olhc`
+- `siemens-as`
+and `$ALGORITHM` can be any of
+- `bruteforce`
+- `dciknn`
+- `flann`
+- `hnswlib`
+- `pydci`
+- `sptag`
 
-* Check that `algos.yaml` contains the parameter settings that you want to test
-* To run experiments on SIFT, invoke `python run.py --dataset glove-100-angular`. See `python run.py --help` for more information on possible settings. Note that experiments can take a long time. 
-* To process the results, either use `python plot.py --dataset glove-100-angular` or `python create_website.py`. An example call: `python create_website.py --plottype recall/time --latex --scatter --outputdir website/`. 
+See `python run.py --help` for further explanation and command line arguments.
+
+In order to change the values tested in the parameter sweep for each method, change the `args` and `query-args` entries under the desired methods in `algos.yaml`.
+
+Since the testing workflow is somewhat complex, a detailed walkthrough is provided in `docs/dynamic_workflow_outline.md`.
+
+Plotting
+========
+
+To replicate the majority of plots in the report, after running `run_script.sh`, run `plot_script.sh`. This script will plot results for a few combinations of algorithms on all datasets. See `python plot_dynamic.py --help` for more information, and see the commands in `plot_script.sh` for examples. Note that specifying metrics in the `--best_metric` argument will find the run with the best behavior in that metric over the last 10% of queries. These algorithms will also be cached separately so that replotting will be much faster. Using the `--force` option will recompute these best runs rather than using their cached versions.
+
+In addition, see `custom_plot_dynamic.py` for plotting individual runs rather than averages of all runs or those best in a certain metric. The main difference is that instead of algorithm names in the `--algorithms` argument, the specific HDF5 files of the desired runs to be plotted should be passed instead.
 
 Including your algorithm
 ========================
@@ -122,7 +98,6 @@ Including your algorithm
 1. Add your algorithm into `ann_benchmarks/algorithms` by providing a small Python wrapper.
 2. Add a Dockerfile in `install/` for it
 3. Add it to `algos.yaml`
-4. Add it to `.github/workflows/benchmarks.yml`
 
 Principles
 ==========
@@ -144,12 +119,14 @@ Principles
 Authors
 =======
 
-Built by [Erik Bernhardsson](https://erikbern.com) with significant contributions from [Martin Aumüller](http://itu.dk/people/maau/) and [Alexander Faithfull](https://github.com/ale-f).
+Original project built by [Erik Bernhardsson](https://erikbern.com) with significant contributions from [Martin Aumüller](http://itu.dk/people/maau/) and [Alexander Faithfull](https://github.com/ale-f).
+
+The modifications for this project were primarily made by [Craig Gross](https://math.msu.edu/~grosscra) with support from Daniel Ejsmont, Cullen Haselby, and Jim Lewis at Michigan State University.
 
 Related Publication
 ==================
 
-The following publication details design principles behind the benchmarking framework: 
+The following publication details design principles behind the original benchmarking framework: 
 
 - M. Aumüller, E. Bernhardsson, A. Faithfull:
 [ANN-Benchmarks: A Benchmarking Tool for Approximate Nearest Neighbor Algorithms](https://arxiv.org/abs/1807.05614). Information Systems 2019. DOI: [10.1016/j.is.2019.02.006](https://doi.org/10.1016/j.is.2019.02.006)

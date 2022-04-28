@@ -6,19 +6,24 @@ from ann_benchmarks.algorithms.base import BaseANN
 
 
 class FLANN(BaseANN):
-    def __init__(self, metric, algorithm, target_precision, branching, iterations):
+    def __init__(self, metric, algorithm, target_precision, branching,
+                 iterations, scale_checks=False):
         self._target_precision = target_precision
         self.name = 'FLANN(target_precision=%f)' % self._target_precision
         self._metric = metric
         self._algorithm = algorithm
         self._branching = branching
         self._iterations = iterations
+        # scale_checks determines whether checks should be constant (False) or
+        # scale with the number of neighbors and branches at each level (True)
+        self._scale_checks = scale_checks
         print(self.name)
 
     def fit(self, X):
         self._flann = pyflann.FLANN(
-            target_precision=self._target_precision,
-            algorithm=self._algorithm, build_weight=1, branching=self._branching, iterations=self._iterations, log_level='info')
+            target_precision=self._target_precision, algorithm=self._algorithm,
+            build_weight=1, branching=self._branching,
+            iterations=self._iterations, log_level='info')
         if self._metric == 'angular':
             X = sklearn.preprocessing.normalize(X, axis=1, norm='l2')
         print(self._flann.build_index(X))
@@ -34,4 +39,8 @@ class FLANN(BaseANN):
             v = sklearn.preprocessing.normalize([v], axis=1, norm='l2')[0]
         # if v.dtype != numpy.float32:
         #     v = v.astype(numpy.float32)
-        return self._flann.nn_index(v, n, checks=self._checks)[0][0]
+        if self._scale_checks:
+            check_val = int((n / self._branching) * self._checks)
+        else:
+            check_val = self._checks
+        return self._flann.nn_index(v, n, checks=check_val)[0][0]

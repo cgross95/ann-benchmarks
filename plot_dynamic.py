@@ -97,8 +97,11 @@ def plot_data(ax, mean, std, flip, linestyle_info, alg_label, smooth,
     if flip:
         plot_data = -plot_data
     ax.plot(plot_data, label=alg_label, color=color,
-            linestyle=linestyle, marker=marker, markevery=0.25, ms=7, lw=3,
+            linestyle=linestyle, marker=marker, markevery=0.25, ms=14, lw=6,
             mew=2)
+    # ax.plot(plot_data, label=alg_label, color=color,
+    #         linestyle=linestyle, marker=marker, markevery=0.25, ms=7, lw=3,
+    #         mew=2)
     low = plot_data - 2 * plot_std
     up = plot_data + 2 * plot_std
     ax.fill_between(plot_data.index, low, up, color=faded)
@@ -192,6 +195,12 @@ if __name__ == "__main__":
         metavar=('lower', 'upper'),
         type=float,
         help='Set limits for vertical axis on ratio plot'
+    )
+    parser.add_argument(
+        '--font',
+        type=int,
+        help='Set font size',
+        default=14
     )
     parser.add_argument(
         '-o', '--output')
@@ -364,41 +373,70 @@ if __name__ == "__main__":
                       args.intervals)
         if args.print_elapsed:
             print(f'{alg_label}, {all_alg_metrics_means[alg_label]["elapsed"]}')
-    axs[0].set_ylabel('Time to build index (sec)', size=14)
-    axs[0].set_title("(a)", y=0, pad=-45, size=20, verticalalignment="top")
+    axs[0].set_ylabel('Time to build index (sec)', size=args.font)
+    if args.font < 20:
+        axs[0].set_title("(a)", y=0, pad=-45, size=20, verticalalignment="top")
+    else:
+        axs[0].set_title("(a)", y=0, pad=-60, size=args.font, verticalalignment="top")
     if args.build_lim:
         axs[0].set_ylim(args.build_lim)
-    axs[1].set_ylabel('Time to search (sec)', size=14)
+    axs[0].tick_params(axis='x', labelsize=args.font)
+    axs[0].tick_params(axis='y', labelsize=args.font)
+    axs[1].set_ylabel('Time to search (sec)', size=args.font)
     axs[1].set_title("(b)", y=0, pad=-45, size=20, verticalalignment="top")
+    if args.font < 20:
+        axs[1].set_title("(b)", y=0, pad=-45, size=20, verticalalignment="top")
+    else:
+        axs[1].set_title("(b)", y=0, pad=-60, size=args.font, verticalalignment="top")
     if args.search_lim:
         axs[1].set_ylim(args.search_lim)
-    axs[2].set_ylabel('Total time (sec)', size=14)
+    axs[1].tick_params(axis='x', labelsize=args.font)
+    axs[1].tick_params(axis='y', labelsize=args.font)
+    axs[2].set_ylabel('Total time (sec)', size=args.font)
     axs[2].set_title("(c)", y=0, pad=-45, size=20, verticalalignment="top")
+    if args.font < 20:
+        axs[2].set_title("(c)", y=0, pad=-45, size=20, verticalalignment="top")
+    else:
+        axs[2].set_title("(c)", y=0, pad=-60, size=args.font, verticalalignment="top")
     if args.total_lim:
         axs[2].set_ylim(args.total_lim)
-    axs[3].set_ylabel('Recall', size=14)
+    axs[2].tick_params(axis='x', labelsize=args.font)
+    axs[2].tick_params(axis='y', labelsize=args.font)
+    axs[3].set_ylabel('Recall', size=args.font)
     axs[3].set_title("(d)", y=0, pad=-45, size=20, verticalalignment="top")
+    if args.font < 20:
+        axs[3].set_title("(d)", y=0, pad=-45, size=20, verticalalignment="top")
+    else:
+        axs[3].set_title("(d)", y=0, pad=-60, size=args.font, verticalalignment="top")
     if args.recall_lim:
         axs[3].set_ylim(args.recall_lim)
     else:
         axs[3].set_ylim([0, 1.1])
-    axs[4].set_ylabel('Approximation ratio', size=14)
+    axs[3].tick_params(axis='x', labelsize=args.font)
+    axs[3].tick_params(axis='y', labelsize=args.font)
+    axs[4].set_ylabel('Approximation ratio', size=args.font)
     axs[4].set_title("(e)", y=0, pad=-45, size=20, verticalalignment="top")
+    if args.font < 20:
+        axs[4].set_title("(e)", y=0, pad=-45, size=20, verticalalignment="top")
+    else:
+        axs[4].set_title("(e)", y=0, pad=-60, size=args.font, verticalalignment="top")
     if args.ratio_lim:
         axs[4].set_ylim(args.ratio_lim)
     else:
         axs[4].set_ylim([0, 1.1])
+    axs[4].tick_params(axis='x', labelsize=args.font)
+    axs[4].tick_params(axis='y', labelsize=args.font)
     for ax in axs:
         # for ax in ax_row:
-        ax.set_xlabel('Iteration Number', size=14)
+        ax.set_xlabel('Iteration Number', size=args.font)
         # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),
         #           prop={'size': 9})
     axs[5].axis('off')
     if args.landscape:
         # fig.legend(loc='upper left', bbox_to_anchor=(0.56, 0.41),
         #            prop={'size': 10})
-        fig.legend(loc='lower right', prop={'size': 14})
+        fig.legend(loc='lower right', prop={'size': 19})
     else:
         fig.legend(loc='upper left', bbox_to_anchor=(0.5, 0.27),
-                   prop={'size': 10})
+                   prop={'size': args.font})
     fig.savefig(args.output, bbox_inches='tight')

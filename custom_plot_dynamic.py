@@ -97,8 +97,11 @@ def plot_data(ax, mean, std, flip, linestyle_info, alg_label, smooth,
     if flip:
         plot_data = -plot_data
     ax.plot(plot_data, label=alg_label, color=color,
-            linestyle=linestyle, marker=marker, markevery=0.25, ms=7, lw=3,
+            linestyle=linestyle, marker=marker, markevery=0.25, ms=14, lw=6,
             mew=2)
+    # ax.plot(plot_data, label=alg_label, color=color,
+    #         linestyle=linestyle, marker=marker, markevery=0.25, ms=7, lw=3,
+    #         mew=2)
     low = plot_data - 2 * plot_std
     up = plot_data + 2 * plot_std
     ax.fill_between(plot_data.index, low, up, color=faded)
@@ -139,9 +142,14 @@ if __name__ == "__main__":
         help='Plot intervals if smoothing method supports it'
     )
     parser.add_argument(
-        '--show_args',
+        '--hide_args',
         action='store_true',
-        help='Show arguments of method found in each best metric'
+        help='Do not display arguments of plotted algorithm in legend. WARNING: This will overwrite results using the same algorithm'
+    )
+    parser.add_argument(
+        '--titles',
+        nargs='+',
+        help='Give custom list of titles corresponding to each algorithm plotted'
     )
     parser.add_argument(
         '--landscape',
@@ -194,6 +202,12 @@ if __name__ == "__main__":
         help='Set limits for vertical axis on ratio plot'
     )
     parser.add_argument(
+        '--font',
+        type=int,
+        help='Set font size',
+        default=14
+    )
+    parser.add_argument(
         '-o', '--output')
     args = parser.parse_args()
 
@@ -230,20 +244,25 @@ if __name__ == "__main__":
         axis=1)
 
     if args.landscape:
-        fig, axs = plt.subplots(2, 3, figsize=(19, 10))
+        fig, axs = plt.subplots(2, 3, figsize=(19, 10), constrained_layout=True)
     else:
-        fig, axs = plt.subplots(3, 2, figsize=(12, 15))
+        fig, axs = plt.subplots(3, 2, figsize=(12, 15), constrained_layout=True)
     axs = axs.flatten()
     alg_metrics_means = {}
     alg_metrics_stds = {}
     all_alg_metrics_means = {}
     all_alg_metrics_stds = {}
-    for alg, result_dirs in results.items():
+    for i, (alg, result_dirs) in enumerate(results.items()):
         for result_dir in result_dirs:
             if not os.path.isdir(result_dir):
                 continue
             result_name = os.path.basename(result_dir)
-            alg_label = f'{alg}_{result_name}'
+            if args.titles:
+                alg_label = args.titles[i]
+            elif args.hide_args:
+                alg_label = alg
+            else:
+                alg_label = f'{alg}_{result_name}'
             runs = os.scandir(result_dir)
             runs_metrics = []
             for run_num, result_file in enumerate(runs):
@@ -293,40 +312,70 @@ if __name__ == "__main__":
                       args.intervals)
         if args.print_elapsed:
             print(f'{alg_label}, {all_alg_metrics_means[alg_label]["elapsed"]}')
-    axs[0].set_ylabel('Time to build index (sec)')
+    axs[0].set_ylabel('Time to build index (sec)', size=args.font)
+    if args.font < 20:
+        axs[0].set_title("(a)", y=0, pad=-45, size=20, verticalalignment="top")
+    else:
+        axs[0].set_title("(a)", y=0, pad=-60, size=args.font, verticalalignment="top")
     if args.build_lim:
         axs[0].set_ylim(args.build_lim)
-        print(args.build_lim)
-    axs[1].set_ylabel('Time to search (sec)')
+    axs[0].tick_params(axis='x', labelsize=args.font)
+    axs[0].tick_params(axis='y', labelsize=args.font)
+    axs[1].set_ylabel('Time to search (sec)', size=args.font)
+    axs[1].set_title("(b)", y=0, pad=-45, size=20, verticalalignment="top")
+    if args.font < 20:
+        axs[1].set_title("(b)", y=0, pad=-45, size=20, verticalalignment="top")
+    else:
+        axs[1].set_title("(b)", y=0, pad=-60, size=args.font, verticalalignment="top")
     if args.search_lim:
         axs[1].set_ylim(args.search_lim)
-        print(args.search_lim)
-    axs[2].set_ylabel('Total time (sec)')
+    axs[1].tick_params(axis='x', labelsize=args.font)
+    axs[1].tick_params(axis='y', labelsize=args.font)
+    axs[2].set_ylabel('Total time (sec)', size=args.font)
+    axs[2].set_title("(c)", y=0, pad=-45, size=20, verticalalignment="top")
+    if args.font < 20:
+        axs[2].set_title("(c)", y=0, pad=-45, size=20, verticalalignment="top")
+    else:
+        axs[2].set_title("(c)", y=0, pad=-60, size=args.font, verticalalignment="top")
     if args.total_lim:
         axs[2].set_ylim(args.total_lim)
-        print(args.total_lim)
-    axs[3].set_ylabel('Recall')
+    axs[2].tick_params(axis='x', labelsize=args.font)
+    axs[2].tick_params(axis='y', labelsize=args.font)
+    axs[3].set_ylabel('Recall', size=args.font)
+    axs[3].set_title("(d)", y=0, pad=-45, size=20, verticalalignment="top")
+    if args.font < 20:
+        axs[3].set_title("(d)", y=0, pad=-45, size=20, verticalalignment="top")
+    else:
+        axs[3].set_title("(d)", y=0, pad=-60, size=args.font, verticalalignment="top")
     if args.recall_lim:
         axs[3].set_ylim(args.recall_lim)
-        print(args.recall_lim)
     else:
         axs[3].set_ylim([0, 1.1])
-    axs[4].set_ylabel('Approximation ratio')
+    axs[3].tick_params(axis='x', labelsize=args.font)
+    axs[3].tick_params(axis='y', labelsize=args.font)
+    axs[4].set_ylabel('Approximation ratio', size=args.font)
+    axs[4].set_title("(e)", y=0, pad=-45, size=20, verticalalignment="top")
+    if args.font < 20:
+        axs[4].set_title("(e)", y=0, pad=-45, size=20, verticalalignment="top")
+    else:
+        axs[4].set_title("(e)", y=0, pad=-60, size=args.font, verticalalignment="top")
     if args.ratio_lim:
         axs[4].set_ylim(args.ratio_lim)
-        print(args.ratio_lim)
     else:
         axs[4].set_ylim([0, 1.1])
+    axs[4].tick_params(axis='x', labelsize=args.font)
+    axs[4].tick_params(axis='y', labelsize=args.font)
     for ax in axs:
         # for ax in ax_row:
-        ax.set_xlabel('Iteration Number')
+        ax.set_xlabel('Iteration Number', size=args.font)
         # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),
         #           prop={'size': 9})
     axs[5].axis('off')
     if args.landscape:
-        fig.legend(loc='upper left', bbox_to_anchor=(0.56, 0.41),
-                   prop={'size': 10})
+        # fig.legend(loc='upper left', bbox_to_anchor=(0.56, 0.41),
+        #            prop={'size': 10})
+        fig.legend(loc='lower right', prop={'size': args.font})
     else:
         fig.legend(loc='upper left', bbox_to_anchor=(0.5, 0.27),
-                   prop={'size': 10})
+                   prop={'size': args.font})
     fig.savefig(args.output, bbox_inches='tight')

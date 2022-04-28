@@ -45,7 +45,7 @@ The following methods are those evaluated in the original project, with annotati
 Data sets
 =========
 
-The datasets used for this project were provided to us by Siemens and is not included in this repository. Before running any tests on this data, please move the following files to the `data` directory: `AS.csv`, `OLHC.csv`, `SHERPA.csv`, `SHERPA_100000.csv`.
+The datasets used for this project were provided to us by Siemens and are not included in this repository. Before running any tests on this data, please move the following files to the `data` directory: `AS.csv`, `OLHC.csv`, `SHERPA.csv`, `SHERPA_100000.csv`.
 
 Note that the data included with the original project should be able to be adapted for dynamic tests. See the function `ann-benchmarks.datasets.write_dynamic_output` for more information and `ann-benchmarks.datasets.siemens_dynamic` for an example.
 
@@ -71,6 +71,7 @@ where `$DATASET` can be any of
 - `siemens-big-sherpa`
 - `siemens-olhc`
 - `siemens-as`
+
 and `$ALGORITHM` can be any of
 - `bruteforce`
 - `dciknn`
@@ -101,18 +102,9 @@ Including your algorithm
 
 Principles
 ==========
-
-* Everyone is welcome to submit pull requests with tweaks and changes to how each library is being used.
-* In particular: if you are the author of any of these libraries, and you think the benchmark can be improved, consider making the improvement and submitting a pull request.
-* This is meant to be an ongoing project and represent the current state.
 * Make everything easy to replicate, including installing and preparing the datasets.
-* Try many different values of parameters for each library and ignore the points that are not on the precision-performance frontier.
-* High-dimensional datasets with approximately 100-1000 dimensions. This is challenging but also realistic. Not more than 1000 dimensions because those problems should probably be solved by doing dimensionality reduction separately.
-* Single queries are used by default. ANN-Benchmarks enforces that only one CPU is saturated during experimentation, i.e., no multi-threading. A batch mode is available that provides all queries to the implementations at once. Add the flag `--batch` to `run.py` and `plot.py` to enable batch mode. 
-* Avoid extremely costly index building (more than several hours).
-* Focus on datasets that fit in RAM. For billion-scale benchmarks, see the related [big-ann-benchmarks](https://github.com/harsha-simhadri/big-ann-benchmarks) project.
+* Single queries are used by default. ANN-Benchmarks enforces that only one CPU is saturated during experimentation, i.e., no multi-threading.
 * We mainly support CPU-based ANN algorithms. GPU support exists for FAISS, but it has to be compiled with GPU support locally and experiments must be run using the flags `--local --batch`. 
-* Do proper train/test set of index data and query points.
 * Note that we consider that set similarity datasets are sparse and thus we pass a **sorted** array of integers to algorithms to represent the set of each user.
 
 
